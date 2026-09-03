@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String?
+  email           String   @unique
+  password        String
+  paydayCutoffDay Int      @default(1) // 1 - 28
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  categories   Category[]
+  accounts     Account[]
+  transfers    Transfer[]
+  savingsGoals SavingsGoal[]
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+model Category {
+  id        String       @id @default(cuid())
+  name      String
+  type      CategoryType
+  userId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+  monthlyBudgets MonthlyBudget[]
+
+  @@unique([name, userId, type])
+}
+
+model MonthlyBudget {
+  id         String   @id @default(cuid())
+  categoryId String
+  month      Int      // 1-12
+  year       Int      // e.g., 2024
+  limit      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, month, year])
+}
+
+enum AccountType {
+  CASH
+  BANK
+  EWALLET
+}
+
+model Account {
+  id        String      @id @default(cuid())
+  name      String
+  type      AccountType @default(CASH)
+  balance   Float       @default(0)
+  userId    String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  transfersFrom   Transfer[]       @relation("TransferFrom")
+  transfersTo     Transfer[]       @relation("TransferTo")
+  savingsGoalLogs SavingsGoalLog[]
+
+  @@unique([name, userId])
+}
+
+model Transfer {
+  id            String   @id @default(cuid())
+  date          DateTime @default(now())
+  fromAccountId String
+  toAccountId   String
+  amount        Float
+  description   String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  fromAccount Account @relation("TransferFrom", fields: [fromAccountId], references: [id], onDelete: Cascade)
+  toAccount   Account @relation("TransferTo", fields: [toAccountId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  date        DateTime
+  categoryId  String
+  accountId   String?
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  account  Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+}
+
+model SavingsGoal {
+  id            String    @id @default(cuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float     @default(0)
+  targetDate    DateTime?
+  color         String    @default("#3b82f6")
+  userId        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs SavingsGoalLog[]
+}
+
+model SavingsGoalLog {
+  id        String   @id @default(cuid())
+  goalId    String
+  accountId String?
+  amount    Float    // Positive for deposit, negative for withdrawal
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  goal    SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  account Account?    @relation(fields: [accountId], references: [id], onDelete: SetNull)
+}
