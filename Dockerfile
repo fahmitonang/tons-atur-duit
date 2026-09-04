@@ -4,11 +4,13 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 
-# Fix DNS for Podman build (host resolv.conf may point to 127.0.0.53 which is unreachable inside container)
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
 COPY package.json package-lock.json* ./
-RUN npm ci
+
+# Fix DNS + install in single RUN (Podman resets /etc/resolv.conf per RUN step)
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    echo "nameserver 1.1.1.1" >> /etc/resolv.conf && \
+    npm ci && \
+    ls node_modules/.bin/prisma
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -18,7 +20,6 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Use local prisma binary directly (no npx = no internet needed)
 RUN ./node_modules/.bin/prisma generate
 RUN npm run build
 
