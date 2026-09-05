@@ -7,30 +7,25 @@ services:
       network: host
     container_name: tons-budget-tracker
     restart: always
-    ports:
-      - "3000:3000"
+    network_mode: host
     env_file:
       - .env
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - finance-network
 
   db:
     image: docker.io/mariadb:10.11
     container_name: mariadb-catkeu
     restart: always
+    command: --port=3307
+    network_mode: host
     env_file:
       - .env
-    ports:
-      - "3307:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-    networks:
-      - finance-network
     healthcheck:
-      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u root -p$$MARIADB_ROOT_PASSWORD || exit 1"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -P 3307 -u root -p$$MARIADB_ROOT_PASSWORD || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +33,3 @@ services:
 
 volumes:
   mariadb_data:
-
-networks:
-  finance-network:
-    driver: bridge
