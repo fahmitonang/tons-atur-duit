@@ -1,19 +1,16 @@
 services:
   app:
+    image: tons-budget-tracker:latest
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     container_name: tons-budget-tracker
     restart: always
     ports:
       - "3000:3000"
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-    environment:
-      - DATABASE_URL
-      - NEXTAUTH_SECRET
-      - NEXTAUTH_URL
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -24,14 +21,8 @@ services:
     image: docker.io/mariadb:10.11
     container_name: mariadb-catkeu
     restart: always
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-    environment:
-      - MARIADB_ROOT_PASSWORD
-      - MARIADB_DATABASE
-      - MARIADB_USER
-      - MARIADB_PASSWORD
+    env_file:
+      - .env
     ports:
       - "3307:3306"
     volumes:
