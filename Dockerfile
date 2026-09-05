@@ -14,7 +14,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npx prisma generate
+# Use npx --no-install to strictly enforce using the local Prisma v6 installed by npm ci.
+# This prevents npx from silently downloading Prisma v7 if the cache is weird.
+RUN npx --no-install prisma generate
 RUN npm run build
 
 # Stage 3: Production server
@@ -52,5 +54,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/auth/session || exit 1
 
 # Run migrations/db push then start server
-CMD sh -c "npx prisma migrate deploy 2>/dev/null || npx prisma db push --accept-data-loss && node server.js"
-
+# Explicitly use npx --no-install to ensure v6 is used in production as well
+CMD sh -c "npx --no-install prisma migrate deploy 2>/dev/null || npx --no-install prisma db push --accept-data-loss && node server.js"
