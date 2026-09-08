@@ -15,8 +15,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
 
-# Generate Prisma client
-RUN npx --no-install prisma generate
+# Use local prisma binary directly — NEVER npx (which may download a different version)
+RUN ./node_modules/.bin/prisma generate
 RUN npm run build
 
 # Stage 3: Production server
@@ -49,10 +49,8 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 
-# Healthcheck to ensure container is ready
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/auth/session || exit 1
 
-# Run migrations/db push then start server
-# Explicitly use npx --no-install to ensure v6 is used in production as well
-CMD sh -c "npx --no-install prisma migrate deploy 2>/dev/null || npx --no-install prisma db push --accept-data-loss && node server.js"
+# Use local prisma binary for startup migration too
+CMD sh -c "./node_modules/.bin/prisma migrate deploy 2>/dev/null || ./node_modules/.bin/prisma db push --accept-data-loss && node server.js"
