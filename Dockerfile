@@ -52,5 +52,5 @@ ENV PORT=3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -qO- http://localhost:3000/api/auth/session || exit 1
 
-# Use local prisma binary for startup migration too
-CMD sh -c "./node_modules/.bin/prisma migrate deploy 2>/dev/null || ./node_modules/.bin/prisma db push --accept-data-loss && node server.js"
+# Use local prisma CLI directly (not .bin symlink which doesn't survive standalone copy)
+CMD sh -c "node node_modules/prisma/build/index.js migrate deploy 2>/dev/null || node node_modules/prisma/build/index.js db push --accept-data-loss && node server.js"
