@@ -13,9 +13,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="mysql://dummy:dummy@localhost:3306/dummy"
 
-# Use npx --no-install to strictly enforce using the local Prisma v6 installed by npm ci.
-# This prevents npx from silently downloading Prisma v7 if the cache is weird.
+# Generate Prisma client
 RUN npx --no-install prisma generate
 RUN npm run build
 
