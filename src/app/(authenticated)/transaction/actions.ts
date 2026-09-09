@@ -10,12 +10,18 @@ export async function addTransaction(
   amount: number, 
   date: Date, 
   description: string,
-  accountId?: string
+  accountId?: string,
+  paymentMethod?: string
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   if (!amount || isNaN(amount) || amount <= 0) throw new Error("Jumlah transaksi tidak valid");
+
+  const validMethods = ["CASH", "QRIS", "TRANSFER", "DEBIT_CARD", "CREDIT_CARD", "EWALLET", "OTHER"];
+  const method = paymentMethod && validMethods.includes(paymentMethod) 
+    ? (paymentMethod as any) 
+    : "CASH";
 
   // Use interactive transaction to verify and create record and update account balance atomically
   await prisma.$transaction(async (tx) => {
@@ -41,7 +47,8 @@ export async function addTransaction(
         amount,
         date,
         description: description?.trim() || null,
-        accountId: validAccountId
+        accountId: validAccountId,
+        paymentMethod: method
       }
     });
 

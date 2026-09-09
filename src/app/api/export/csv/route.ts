@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
+import { getPaymentMethodLabel } from "@/lib/paymentMethod";
 
 export async function GET(req: Request) {
   try {
@@ -39,16 +40,17 @@ export async function GET(req: Request) {
     });
 
     // Generate CSV lines
-    const headers = ["ID", "Tanggal", "Kategori", "Jenis", "Dompet", "Nominal (Rp)", "Keterangan"];
+    const headers = ["ID", "Tanggal", "Kategori", "Jenis", "Dompet", "Metode Pembayaran", "Nominal (Rp)", "Keterangan"];
     const rows = transactions.map(t => {
       const formattedDate = format(new Date(t.date), "yyyy-MM-dd");
       const categoryName = `"${(t.category?.name || "").replace(/"/g, '""')}"`;
       const type = t.category?.type === "INCOME" ? "Pemasukan" : "Pengeluaran";
       const accountName = `"${(t.account?.name || "Tunai").replace(/"/g, '""')}"`;
+      const paymentMethod = `"${getPaymentMethodLabel((t as any).paymentMethod)}"`;
       const amount = t.amount;
       const desc = `"${(t.description || "").replace(/"/g, '""')}"`;
 
-      return [t.id, formattedDate, categoryName, type, accountName, amount, desc].join(",");
+      return [t.id, formattedDate, categoryName, type, accountName, paymentMethod, amount, desc].join(",");
     });
 
     const csvContent = [headers.join(","), ...rows].join("\r\n");

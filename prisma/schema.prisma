@@ -97,15 +97,26 @@ model Transfer {
   user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum PaymentMethod {
+  CASH
+  QRIS
+  TRANSFER
+  DEBIT_CARD
+  CREDIT_CARD
+  EWALLET
+  OTHER
+}
+
 model Transaction {
-  id          String   @id @default(cuid())
-  date        DateTime
-  categoryId  String
-  accountId   String?
-  amount      Float
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String        @id @default(cuid())
+  date          DateTime
+  categoryId    String
+  accountId     String?
+  paymentMethod PaymentMethod @default(CASH)
+  amount        Float
+  description   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   account  Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)

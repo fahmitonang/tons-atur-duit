@@ -19,14 +19,17 @@ import {
   ArrowUpRight,
   Search,
   Download,
-  Wallet
+  Wallet,
+  CreditCard
 } from "lucide-react";
+import { PAYMENT_METHODS, getPaymentMethodLabel } from "@/lib/paymentMethod";
 
 type Transaction = {
   id: string;
   date: Date | string;
   amount: number;
   description: string | null;
+  paymentMethod?: string;
   category: { id: string; name: string; type: "INCOME" | "EXPENSE" };
   account?: { id: string; name: string } | null;
 };
@@ -78,12 +81,14 @@ export default function HistoryClient({
   const [editForm, setEditForm] = useState<{
     categoryId: string;
     accountId: string;
+    paymentMethod: string;
     amount: string;
     date: string;
     description: string;
   }>({
     categoryId: "",
     accountId: "",
+    paymentMethod: "CASH",
     amount: "",
     date: "",
     description: ""
@@ -101,6 +106,7 @@ export default function HistoryClient({
     setEditForm({
       categoryId: t.category.id,
       accountId: t.account?.id || (accounts[0]?.id || ""),
+      paymentMethod: t.paymentMethod || "CASH",
       amount: t.amount.toString(),
       date: format(dateObj, 'yyyy-MM-dd'),
       description: t.description || ""
@@ -129,7 +135,8 @@ export default function HistoryClient({
         parsed,
         localDate,
         editForm.description.trim(),
-        editForm.accountId || undefined
+        editForm.accountId || undefined,
+        editForm.paymentMethod
       );
 
       const updatedCategory = categories.find(c => c.id === editForm.categoryId) || editingTransaction.category;
@@ -142,6 +149,7 @@ export default function HistoryClient({
             categoryId: editForm.categoryId,
             category: updatedCategory,
             account: updatedAccount,
+            paymentMethod: editForm.paymentMethod,
             amount: parsed,
             date: localDate,
             description: editForm.description.trim() || null
@@ -185,7 +193,8 @@ export default function HistoryClient({
         const matchCategory = t.category.name.toLowerCase().includes(query);
         const matchDesc = t.description?.toLowerCase().includes(query);
         const matchAccount = t.account?.name?.toLowerCase().includes(query);
-        if (!matchCategory && !matchDesc && !matchAccount) return false;
+        const matchMethod = t.paymentMethod ? getPaymentMethodLabel(t.paymentMethod).toLowerCase().includes(query) : false;
+        if (!matchCategory && !matchDesc && !matchAccount && !matchMethod) return false;
       }
       return true;
     });
@@ -328,8 +337,13 @@ export default function HistoryClient({
                           {t.category.name}
                         </p>
                         {t.account && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
                             {t.account.name}
+                          </span>
+                        )}
+                        {t.paymentMethod && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 rounded border border-blue-100 dark:border-blue-900/40">
+                            {getPaymentMethodLabel(t.paymentMethod)}
                           </span>
                         )}
                       </div>
@@ -429,6 +443,23 @@ export default function HistoryClient({
                   </select>
                 </div>
               )}
+
+              {/* Payment Method */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+                  Metode Pembayaran
+                </label>
+                <select
+                  value={editForm.paymentMethod}
+                  onChange={e => setEditForm({...editForm, paymentMethod: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  {PAYMENT_METHODS.map(m => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Category */}
               <div>

@@ -11,12 +11,15 @@ export async function updateTransaction(
   amount: number, 
   date: Date, 
   description: string,
-  accountId?: string
+  accountId?: string,
+  paymentMethod?: string
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   if (!amount || isNaN(amount) || amount <= 0) throw new Error("Jumlah transaksi tidak valid");
+
+  const validMethods = ["CASH", "QRIS", "TRANSFER", "DEBIT_CARD", "CREDIT_CARD", "EWALLET", "OTHER"];
 
   // Normalize accountId: empty string → null, undefined → keep old
   const normalizedAccountId: string | null | undefined =
@@ -85,6 +88,10 @@ export async function updateTransaction(
       }
     }
 
+    const method = paymentMethod && validMethods.includes(paymentMethod)
+      ? (paymentMethod as any)
+      : oldTx.paymentMethod;
+
     // 7. Update transaction record
     await tx.transaction.update({
       where: { id },
@@ -93,7 +100,8 @@ export async function updateTransaction(
         amount,
         date,
         description: description?.trim() || null,
-        accountId: targetAccountId
+        accountId: targetAccountId,
+        paymentMethod: method
       }
     });
   });

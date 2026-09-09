@@ -25,6 +25,7 @@ import {
 import ExpenseDonutChart from "@/components/ExpenseDonutChart";
 import DailyTrendChart from "@/components/DailyTrendChart";
 import { getBillingPeriod } from "@/lib/period";
+import { getPaymentMethodLabel } from "@/lib/paymentMethod";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -625,8 +626,13 @@ export default async function DashboardPage() {
                       {t.category.name}
                     </p>
                     {t.account && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded">
                         {t.account.name}
+                      </span>
+                    )}
+                    {t.paymentMethod && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 rounded border border-blue-100 dark:border-blue-900/40">
+                        {getPaymentMethodLabel(t.paymentMethod)}
                       </span>
                     )}
                   </div>

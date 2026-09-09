@@ -18,8 +18,14 @@ import {
   Wallet, 
   AlertTriangle, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  QrCode,
+  CreditCard,
+  ArrowRightLeft,
+  Smartphone,
+  Layers
 } from "lucide-react";
+import { PAYMENT_METHODS, PaymentMethodType } from "@/lib/paymentMethod";
 
 type Category = {
   id: string;
@@ -51,10 +57,30 @@ export default function TransactionForm({
   const [type, setType] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   const [categoryId, setCategoryId] = useState("");
   const [accountId, setAccountId] = useState(accounts[0]?.id || "");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(() => {
+    const acc = accounts[0];
+    if (acc?.type === "BANK") return "TRANSFER";
+    if (acc?.type === "EWALLET") return "QRIS";
+    return "CASH";
+  });
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleAccountChange = (newAccId: string) => {
+    setAccountId(newAccId);
+    const selectedAcc = accounts.find(a => a.id === newAccId);
+    if (selectedAcc) {
+      if (selectedAcc.type === "CASH") {
+        setPaymentMethod("CASH");
+      } else if (selectedAcc.type === "BANK") {
+        if (paymentMethod === "CASH") setPaymentMethod("TRANSFER");
+      } else if (selectedAcc.type === "EWALLET") {
+        if (paymentMethod === "CASH") setPaymentMethod("QRIS");
+      }
+    }
+  };
 
   const filteredCategories = categories.filter(c => c.type === type);
 
@@ -103,7 +129,8 @@ export default function TransactionForm({
         parsedAmount, 
         localDate,
         description.trim(),
-        accountId || undefined
+        accountId || undefined,
+        paymentMethod
       );
 
       setAmount("");
@@ -194,7 +221,7 @@ export default function TransactionForm({
               </div>
               <select
                 value={accountId}
-                onChange={e => setAccountId(e.target.value)}
+                onChange={e => handleAccountChange(e.target.value)}
                 className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
               >
                 {accounts.map(acc => (
@@ -205,6 +232,39 @@ export default function TransactionForm({
               </select>
             </div>
           )}
+
+          {/* Metode Pembayaran */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+              Metode Pembayaran
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+              {PAYMENT_METHODS.map((method) => {
+                const isSelected = paymentMethod === method.id;
+                return (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={`px-2 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 border transition-all ${
+                      isSelected
+                        ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950/60 dark:border-blue-500 dark:text-blue-300 shadow-2xs font-bold ring-1 ring-blue-500"
+                        : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-650 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium"
+                    }`}
+                  >
+                    {method.id === "QRIS" && <QrCode className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                    {method.id === "CASH" && <Banknote className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                    {method.id === "TRANSFER" && <ArrowRightLeft className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
+                    {(method.id === "DEBIT_CARD" || method.id === "CREDIT_CARD") && <CreditCard className="w-3.5 h-3.5 text-purple-500 shrink-0" />}
+                    {method.id === "EWALLET" && <Smartphone className="w-3.5 h-3.5 text-teal-500 shrink-0" />}
+                    {method.id === "OTHER" && <Layers className="w-3.5 h-3.5 text-gray-500 shrink-0" />}
+                    <span className="truncate">{method.shortLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Kategori Select */}
           <div>
