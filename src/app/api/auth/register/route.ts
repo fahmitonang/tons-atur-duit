@@ -1,11 +1,38 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { verifyCaptcha } from "@/lib/captcha";
 
 export async function POST(req: Request) {
   try {
-    const { name, username, email, password } = await req.json();
+    // 1. Cek apakah pendaftaran publik diizinkan
+    const allowRegistration = process.env.ALLOW_REGISTRATION !== "false";
+    if (!allowRegistration) {
+      return NextResponse.json(
+        { message: "Pendaftaran akun baru saat ini ditutup oleh administrator." },
+        { status: 403 }
+      );
+    }
 
+    const body = await req.json();
+    const { name, username, email, password, captchaAnswer, captchaToken, honeypot } = body;
+
+    // 2. Proteksi Honeypot (Jika bot mengisi field tersembunyi ini, tolak langsung)
+    if (honeypot && String(honeypot).trim() !== "") {
+      // Tolak senyap / pesan generik untuk mengecoh bot
+      return NextResponse.json({ message: "Permintaan tidak valid" }, { status: 400 });
+    }
+
+    // 3. Verifikasi Captcha Matematika
+    const captchaVerification = verifyCaptcha(captchaAnswer, captchaToken);
+    if (!captchaVerification.valid) {
+      return NextResponse.json(
+        { message: captchaVerification.error || "Verifikasi keamanan gagal" },
+        { status: 400 }
+      );
+    }
+
+    // 4. Validasi Kredensial Pengguna
     if (!username || !username.trim()) {
       return NextResponse.json({ message: "Username wajib diisi" }, { status: 400 });
     }

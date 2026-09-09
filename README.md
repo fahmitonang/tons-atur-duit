@@ -14,6 +14,7 @@ Aplikasi web modern untuk pencatatan keuangan pribadi, kontrol anggaran (*budget
 - **Target Tabungan (Savings Goals)**: Buat pos impian tabungan dengan pencatatan setor/tarik dan visualisasi persentase progres.
 - **Riwayat Transaksi & Filter Interaktif**: Filter berdasarkan rentang tanggal, kategori, dan dompet.
 - **Ekspor Data CSV**: Unduh laporan transaksi keuangan kapan saja ke format CSV.
+- **Proteksi Anti-Bot & Keamanan Registrasi**: Dilengkapi verifikasi Captcha matematika mandiri (tanpa dependensi eksternal), proteksi *honeypot*, dan opsi sakelar pendaftaran publik (`ALLOW_REGISTRATION=false`).
 - **Mode Gelap / Terang (Dark / Light Mode)**: Tampilan nyaman di mata dengan dukungan tema otomatis.
 - **PWA & Mobile-First Ready**: Navigasi responsif dengan *bottom navigation bar* yang nyaman digunakan di smartphone.
 
