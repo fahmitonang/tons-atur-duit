@@ -4,14 +4,29 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, username, email, password } = await req.json();
 
-    if (!name || !name.trim()) {
-      return NextResponse.json({ message: "Nama lengkap wajib diisi" }, { status: 400 });
+    if (!username || !username.trim()) {
+      return NextResponse.json({ message: "Username wajib diisi" }, { status: 400 });
     }
 
-    if (!email || !email.trim()) {
-      return NextResponse.json({ message: "Email wajib diisi" }, { status: 400 });
+    const normalizedUsername = username.trim().toLowerCase();
+
+    // Validasi format username (3-30 karakter, alfanumerik, titik, strip, underscore)
+    if (!/^[a-zA-Z0-9_.-]{3,30}$/.test(normalizedUsername)) {
+      return NextResponse.json(
+        { message: "Username harus 3-30 karakter dan hanya boleh berisi huruf, angka, titik, strip, atau garis bawah" },
+        { status: 400 }
+      );
+    }
+
+    // Cek ketersediaan username
+    const existingUsername = await prisma.user.findUnique({
+      where: { username: normalizedUsername },
+    });
+
+    if (existingUsername) {
+      return NextResponse.json({ message: "Username sudah digunakan, silakan pilih username lain" }, { status: 400 });
     }
 
     if (!password) {
@@ -22,21 +37,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Password minimal 8 karakter" }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const existingUser = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
+    // Email opsional, namun jika diisi harus unik
+    let normalizedEmail: string | undefined = undefined;
+    if (email && typeof email === "string" && email.trim()) {
+      normalizedEmail = email.trim().toLowerCase();
+      const existingEmail = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
 
-    if (existingUser) {
-      return NextResponse.json({ message: "Email sudah terdaftar" }, { status: 400 });
+      if (existingEmail) {
+        return NextResponse.json({ message: "Email sudah terdaftar" }, { status: 400 });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user along with default wallet (Tunai) and standard categories
+    // Buat user bersamaan dengan dompet default (Tunai) dan kategori standar
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
+        username: normalizedUsername,
+        name: name && name.trim() ? name.trim() : normalizedUsername,
         email: normalizedEmail,
         password: hashedPassword,
         accounts: {
@@ -61,7 +81,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(
-      { message: "Akun berhasil dibuat", user: { id: user.id, email: user.email } },
+      { message: "Akun berhasil dibuat", user: { id: user.id, username: user.username, email: user.email } },
       { status: 201 }
     );
   } catch (error) {

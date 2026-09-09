@@ -193,10 +193,19 @@ export default function ProfilePage() {
             </h2>
             <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
-            <Mail className="w-3.5 h-3.5 shrink-0" />
-            {session?.user?.email || '-'}
-          </p>
+          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            {session?.user?.username && (
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                @{session.user.username}
+              </span>
+            )}
+            {session?.user?.email && (
+              <span className="flex items-center gap-1 truncate">
+                <Mail className="w-3 h-3 shrink-0" />
+                {session.user.email}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

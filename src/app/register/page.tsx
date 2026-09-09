@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Wallet, User, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Wallet, User, AtSign, Mail, Lock, Eye, EyeOff, UserPlus } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +17,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!username.trim()) {
+      toast.error("Username wajib diisi");
+      return;
+    }
 
     if (password.length < 8) {
       toast.error("Password minimal 8 karakter");
@@ -28,8 +34,9 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          name: name.trim(), 
-          email: email.trim().toLowerCase(), 
+          name: name.trim(),
+          username: username.trim(),
+          email: email.trim() || null, 
           password 
         }),
       });
@@ -86,16 +93,35 @@ export default function RegisterPage() {
             </div>
           </div>
 
+          {/* Username */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+              Username <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <AtSign className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                required
+                autoComplete="username"
+                placeholder="pilih_username (untuk login)"
+                className="w-full pl-10 pr-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 placeholder-gray-400 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_.-]/g, ""))}
+              />
+            </div>
+            <p className="text-[11px] text-gray-400 mt-1">Digunakan sebagai ID saat login</p>
+          </div>
+
           {/* Email */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Alamat Email
+              Alamat Email <span className="text-xs font-normal text-gray-400">(Opsional)</span>
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
-                required
                 autoComplete="email"
                 placeholder="nama@email.com"
                 className="w-full pl-10 pr-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 placeholder-gray-400 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
@@ -108,7 +134,7 @@ export default function RegisterPage() {
           {/* Password */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Password (minimal 8 karakter)
+              Password (minimal 8 karakter) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -135,7 +161,7 @@ export default function RegisterPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading || !name || !email || !password}
+            disabled={loading || !name || !username || !password}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 mt-2"
           >
             <UserPlus className="w-4 h-4" />

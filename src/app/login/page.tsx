@@ -5,10 +5,10 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { Wallet, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Wallet, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function LoginPage() {
 
     const res = await signIn("credentials", {
       redirect: false,
-      email: email.trim(),
+      username: username.trim(),
       password,
     });
 
@@ -53,21 +53,21 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Email */}
+          {/* Username */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Alamat Email
+              Username
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="email"
+                type="text"
                 required
-                autoComplete="email"
-                placeholder="nama@email.com"
+                autoComplete="username"
+                placeholder="Masukkan username"
                 className="w-full pl-10 pr-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 placeholder-gray-400 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading || !email || !password}
+            disabled={loading || !username || !password}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 mt-2"
           >
             {loading ? "Memproses..." : "Masuk ke Akun"}

@@ -8,32 +8,39 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "email@example.com" },
+        username: { label: "Username", type: "text", placeholder: "username" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing credentials");
+        const input = (credentials?.username || (credentials as any)?.email)?.trim()?.toLowerCase();
+
+        if (!input || !credentials?.password) {
+          throw new Error("Username dan password wajib diisi");
         }
 
-        const user = await prisma.user.findUnique({
+        // Cari berdasarkan username atau email
+        const user = await prisma.user.findFirst({
           where: {
-            email: credentials.email
+            OR: [
+              { username: input },
+              { email: input }
+            ]
           }
         });
 
         if (!user || !user.password) {
-          throw new Error("Email atau password tidak valid");
+          throw new Error("Username atau password tidak valid");
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
-          throw new Error("Email atau password tidak valid");
+          throw new Error("Username atau password tidak valid");
         }
 
         return {
           id: user.id,
+          username: user.username,
           email: user.email,
           name: user.name,
         };
@@ -47,12 +54,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.username = (user as any).username;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.username = token.username as string;
       }
       return session;
     }
@@ -61,4 +70,3 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
 };
-
