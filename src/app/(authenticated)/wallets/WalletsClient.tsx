@@ -309,7 +309,7 @@ export default function WalletsClient({
               className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-750 flex items-center justify-center shrink-0 border border-gray-100 dark:border-gray-700">
+                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700/50 flex items-center justify-center shrink-0 border border-gray-100 dark:border-gray-700">
                   {getAccountIcon(acc.type)}
                 </div>
                 <div>
@@ -328,7 +328,7 @@ export default function WalletsClient({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleOpenEdit(acc)}
-                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   title="Edit Dompet & Saldo"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -336,7 +336,7 @@ export default function WalletsClient({
                 {accounts.length > 1 && (
                   <button
                     onClick={() => handleDeleteAccount(acc.id, acc.name)}
-                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     title="Hapus Dompet"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -620,7 +620,7 @@ export default function WalletsClient({
                       className={`py-2 px-2 text-xs font-semibold rounded-xl border flex flex-col items-center gap-1 transition-all ${
                         editAccountType === t 
                           ? "bg-blue-50 dark:bg-blue-950/50 border-blue-500 text-blue-700 dark:text-blue-300 shadow-2xs font-bold" 
-                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-750"
+                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                       }`}
                     >
                       {getAccountIcon(t)}

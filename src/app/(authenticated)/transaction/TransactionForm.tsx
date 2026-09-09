@@ -254,7 +254,7 @@ export default function TransactionForm({
                     className={`px-2 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 border transition-all ${
                       isSelected
                         ? "bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-950/60 dark:border-blue-500 dark:text-blue-300 shadow-2xs font-bold ring-1 ring-blue-500"
-                        : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-650 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium"
+                        : "bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium"
                     }`}
                   >
                     {method.id === "QRIS" && <QrCode className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}

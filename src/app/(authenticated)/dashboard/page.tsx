@@ -286,7 +286,7 @@ export default async function DashboardPage() {
         {/* Quick wallet chips */}
         <div className="flex gap-2 overflow-x-auto pb-1 text-xs">
           {accounts.map(acc => (
-            <div key={acc.id} className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-100 dark:border-gray-700 flex items-center gap-1.5 shrink-0">
+            <div key={acc.id} className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/50 flex items-center gap-1.5 shrink-0">
               <span className="font-semibold text-gray-700 dark:text-gray-300">{acc.name}:</span>
               <span className="font-bold text-blue-600 dark:text-blue-400">{formatter.format(acc.balance)}</span>
             </div>

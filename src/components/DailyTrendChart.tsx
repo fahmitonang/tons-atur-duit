@@ -153,9 +153,11 @@ export default function DailyTrendChart({
                       ? "#f43f5e"
                       : item.amount > 0
                       ? "#60a5fa"
-                      : "#e2e8f0"
+                      : undefined
                   }
-                  className="transition-all duration-300 dark:opacity-90"
+                  className={`transition-all duration-300 ${
+                    item.amount === 0 ? "fill-gray-100 dark:fill-gray-700/60" : "dark:opacity-90"
+                  }`}
                 />
 
                 {/* Day label every 5 days or 1st & last day */}

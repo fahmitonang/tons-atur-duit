@@ -114,7 +114,7 @@ export default function ExpenseDonutChart({
       {/* Breakdown Legend */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-700/60">
         {segments.map((seg) => (
-          <div key={seg.id} className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-gray-750/50 text-xs">
+          <div key={seg.id} className="flex items-center justify-between p-2 rounded-xl bg-gray-50 dark:bg-gray-700/40 border border-transparent dark:border-gray-700/60 text-xs">
             <div className="flex items-center gap-2 overflow-hidden">
               <span 
                 className="w-3 h-3 rounded-full shrink-0" 

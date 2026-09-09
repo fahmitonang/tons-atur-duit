@@ -283,7 +283,7 @@ export default function HistoryClient({
           <a
             href="/api/export/csv"
             download
-            className="w-full py-2 px-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5"
+            className="w-full py-2 px-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5"
             title="Unduh Riwayat ke CSV"
           >
             <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -318,7 +318,7 @@ export default function HistoryClient({
             {/* Transaction Cards in Group */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700/60">
               {group.items.map(t => (
-                <div key={t.id} className="p-3.5 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                <div key={t.id} className="p-3.5 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       t.category.type === "INCOME" 

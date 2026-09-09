@@ -269,7 +269,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Verifikasi Keamanan (Math Challenge Captcha) */}
-          <div className="p-3.5 bg-gray-50 dark:bg-gray-750 rounded-xl border border-gray-200 dark:border-gray-650 space-y-2">
+          <div className="p-3.5 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-700 space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300">
               <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
                 <ShieldCheck className="w-4 h-4" />
