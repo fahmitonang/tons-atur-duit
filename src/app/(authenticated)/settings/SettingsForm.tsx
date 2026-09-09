@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   addCategory, 
+  updateCategory,
   deleteCategory, 
   setMonthlyBudget, 
   deleteMonthlyBudget,
@@ -13,6 +14,7 @@ import toast from "react-hot-toast";
 import { 
   PlusCircle, 
   Trash2, 
+  Edit3,
   ChevronLeft, 
   ChevronRight, 
   Calendar, 
@@ -71,6 +73,12 @@ export default function SettingsForm({
   const [newCatType, setNewCatType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
   const [addingCategory, setAddingCategory] = useState(false);
 
+  // Edit Category State
+  const [editingCategory, setEditingCategory] = useState<CategoryWithBudget | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  const [editCategoryType, setEditCategoryType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
+  const [savingEditCategory, setSavingEditCategory] = useState(false);
+
   // Budget Inputs & Loaders
   const [budgetInputs, setBudgetInputs] = useState<Record<string, string>>({});
   const [budgetLoading, setBudgetLoading] = useState<Record<string, boolean>>({});
@@ -107,10 +115,14 @@ export default function SettingsForm({
     if (!newCatName.trim()) return;
     setAddingCategory(true);
     try {
-      await addCategory(newCatName.trim(), newCatType);
+      const res = await addCategory(newCatName.trim(), newCatType);
+      if (!res.success) {
+        toast.error(res.error || "Gagal menambahkan kategori");
+        return;
+      }
       
       const newCat: CategoryWithBudget = {
-        id: `temp-${Date.now()}`,
+        id: res.category?.id || `temp-${Date.now()}`,
         name: newCatName.trim(),
         type: newCatType,
         monthlyBudgets: []
@@ -127,12 +139,48 @@ export default function SettingsForm({
     }
   };
 
+  // Edit Category Handler
+  const handleEditCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory || !editCategoryName.trim()) return;
+    setSavingEditCategory(true);
+    try {
+      const res = await updateCategory(
+        editingCategory.id, 
+        editCategoryName.trim(), 
+        editCategoryType
+      );
+      if (!res.success) {
+        toast.error(res.error || "Gagal mengubah kategori");
+        return;
+      }
+
+      setCategories(prev => prev.map(c => 
+        c.id === editingCategory.id 
+          ? { ...c, name: editCategoryName.trim(), type: editCategoryType } 
+          : c
+      ));
+
+      toast.success(`Kategori berhasil diperbarui`);
+      setEditingCategory(null);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal mengubah kategori");
+    } finally {
+      setSavingEditCategory(false);
+    }
+  };
+
   // Delete Category Handler
   const handleConfirmDeleteCategory = async () => {
     if (!deletingCatId) return;
     setIsDeletingCat(true);
     try {
-      await deleteCategory(deletingCatId);
+      const res = await deleteCategory(deletingCatId);
+      if (!res.success) {
+        toast.error(res.error || "Gagal menghapus kategori");
+        return;
+      }
       setCategories(prev => prev.filter(c => c.id !== deletingCatId));
       toast.success("Kategori berhasil dihapus");
       setDeletingCatId(null);
@@ -156,7 +204,11 @@ export default function SettingsForm({
     
     setBudgetLoading(prev => ({ ...prev, [categoryId]: true }));
     try {
-      await setMonthlyBudget(categoryId, limit, selectedMonth, selectedYear);
+      const res = await setMonthlyBudget(categoryId, limit, selectedMonth, selectedYear);
+      if (!res.success) {
+        toast.error(res.error || "Gagal mengatur budget");
+        return;
+      }
       setBudgetInputs(prev => ({ ...prev, [categoryId]: "" }));
       
       // Update local state for selected month/year
@@ -181,7 +233,11 @@ export default function SettingsForm({
   const handleDeleteBudget = async (categoryId: string) => {
     setBudgetLoading(prev => ({ ...prev, [categoryId]: true }));
     try {
-      await deleteMonthlyBudget(categoryId, selectedMonth, selectedYear);
+      const res = await deleteMonthlyBudget(categoryId, selectedMonth, selectedYear);
+      if (!res.success) {
+        toast.error(res.error || "Gagal mereset budget");
+        return;
+      }
       setCategories(prev => prev.map(c => {
         if (c.id !== categoryId) return c;
         return {
@@ -209,6 +265,10 @@ export default function SettingsForm({
     setCopyingBudget(true);
     try {
       const res = await copyBudgetFromPreviousMonth(selectedMonth, selectedYear);
+      if (!res.success) {
+        toast.error(res.error || "Gagal menyalin budget");
+        return;
+      }
       toast.success(`Berhasil menyalin ${res.copiedCount} budget dari bulan sebelumnya!`);
       router.refresh();
     } catch (e: any) {
@@ -505,14 +565,28 @@ export default function SettingsForm({
                   expenseCategories.map(cat => (
                     <div key={cat.id} className="py-2.5 flex justify-between items-center">
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{cat.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setDeletingCatId(cat.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
-                        title="Hapus Kategori"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCategory(cat);
+                            setEditCategoryName(cat.name);
+                            setEditCategoryType(cat.type);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Edit Kategori"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingCatId(cat.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Hapus Kategori"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -535,19 +609,123 @@ export default function SettingsForm({
                   incomeCategories.map(cat => (
                     <div key={cat.id} className="py-2.5 flex justify-between items-center">
                       <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{cat.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setDeletingCatId(cat.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-colors"
-                        title="Hapus Kategori"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCategory(cat);
+                            setEditCategoryName(cat.name);
+                            setEditCategoryType(cat.type);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Edit Kategori"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingCatId(cat.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          title="Hapus Kategori"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {editingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+            <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Edit Kategori
+              </h3>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                editCategoryType === "EXPENSE" 
+                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+              }`}>
+                {editCategoryType === "EXPENSE" ? "Pengeluaran" : "Pemasukan"}
+              </span>
+            </div>
+
+            <form onSubmit={handleEditCategorySubmit} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
+                  Nama Kategori
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={editCategoryName}
+                  onChange={(e) => setEditCategoryName(e.target.value)}
+                  placeholder="Nama kategori..."
+                  className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                />
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  Nama baru akan otomatis diperbarui di seluruh riwayat transaksi & budget Anda.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
+                  Jenis Kategori
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditCategoryType("EXPENSE")}
+                    className={`py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all border ${
+                      editCategoryType === "EXPENSE"
+                        ? "bg-rose-50 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300"
+                        : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    Pengeluaran
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditCategoryType("INCOME")}
+                    className={`py-2 px-3 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all border ${
+                      editCategoryType === "INCOME"
+                        ? "bg-emerald-50 border-emerald-300 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300"
+                        : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
+                    <ArrowDownLeft className="w-3.5 h-3.5" />
+                    Pemasukan
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={savingEditCategory || !editCategoryName.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-colors"
+                >
+                  {savingEditCategory ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingCategory(null)}
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
