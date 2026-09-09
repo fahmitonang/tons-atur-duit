@@ -7,6 +7,7 @@ import { id as idLocale } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { 
   createAccount, 
+  updateAccount,
   deleteAccount, 
   transferFunds 
 } from "./actions";
@@ -18,6 +19,7 @@ import {
   Banknote, 
   Smartphone, 
   Trash2, 
+  Edit3,
   X, 
   Calendar, 
   FileText, 
@@ -74,6 +76,13 @@ export default function WalletsClient({
   const [startingBalance, setStartingBalance] = useState("");
   const [addingAccount, setAddingAccount] = useState(false);
 
+  // Form: Edit Account & Balance
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [editAccountName, setEditAccountName] = useState("");
+  const [editAccountType, setEditAccountType] = useState<"CASH" | "BANK" | "EWALLET">("CASH");
+  const [editAccountBalance, setEditAccountBalance] = useState("");
+  const [savingEditAccount, setSavingEditAccount] = useState(false);
+
   // Form: Transfer
   const [fromAccountId, setFromAccountId] = useState(accounts[0]?.id || "");
   const [toAccountId, setToAccountId] = useState(accounts[1]?.id || "");
@@ -110,13 +119,20 @@ export default function WalletsClient({
     setAddingAccount(true);
     try {
       const initBal = parseFloat(startingBalance) || 0;
-      const createdAcc = await createAccount(newAccountName.trim(), newAccountType, initBal);
+      const res = await createAccount(newAccountName.trim(), newAccountType, initBal);
       
-      setAccounts(prev => [...prev, createdAcc]);
+      if (!res.success) {
+        toast.error(res.error || "Gagal membuat dompet");
+        return;
+      }
+
+      if (res.account) {
+        setAccounts(prev => [...prev, res.account as Account]);
+      }
       setNewAccountName("");
       setStartingBalance("");
       setShowAddModal(false);
-      toast.success(`Dompet "${createdAcc.name}" berhasil dibuat!`);
+      toast.success(`Dompet "${res.account?.name || newAccountName}" berhasil dibuat!`);
       router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal membuat dompet");
@@ -125,11 +141,54 @@ export default function WalletsClient({
     }
   };
 
+  const handleOpenEdit = (acc: Account) => {
+    setEditingAccount(acc);
+    setEditAccountName(acc.name);
+    setEditAccountType(acc.type);
+    setEditAccountBalance(acc.balance.toString());
+  };
+
+  const handleEditAccountSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAccount || !editAccountName.trim()) return;
+
+    setSavingEditAccount(true);
+    try {
+      const bal = parseFloat(editAccountBalance);
+      const res = await updateAccount(
+        editingAccount.id,
+        editAccountName.trim(),
+        editAccountType,
+        isNaN(bal) ? 0 : bal
+      );
+
+      if (!res.success) {
+        toast.error(res.error || "Gagal memperbarui dompet");
+        return;
+      }
+
+      if (res.account) {
+        setAccounts(prev => prev.map(a => a.id === editingAccount.id ? { ...a, ...res.account } : a));
+      }
+      setEditingAccount(null);
+      toast.success("Dompet & saldo berhasil diperbarui!");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal memperbarui dompet");
+    } finally {
+      setSavingEditAccount(false);
+    }
+  };
+
   const handleDeleteAccount = async (id: string, name: string) => {
-    if (!confirm(`Hapus dompet "${name}"? Pastikan tidak ada transaksi penting terkait.`)) return;
+    if (!confirm(`Hapus dompet "${name}"? Pastikan saldo sudah 0 atau dipindahkan.`)) return;
 
     try {
-      await deleteAccount(id);
+      const res = await deleteAccount(id);
+      if (!res.success) {
+        toast.error(res.error || "Gagal menghapus dompet");
+        return;
+      }
       setAccounts(prev => prev.filter(a => a.id !== id));
       toast.success("Dompet berhasil dihapus");
       router.refresh();
@@ -157,7 +216,11 @@ export default function WalletsClient({
       const [year, month, day] = transferDate.split('-').map(Number);
       const localDate = new Date(year, month - 1, day);
 
-      await transferFunds(fromAccountId, toAccountId, amountNum, transferNotes, localDate);
+      const res = await transferFunds(fromAccountId, toAccountId, amountNum, transferNotes, localDate);
+      if (!res.success) {
+        toast.error(res.error || "Gagal memproses transfer");
+        return;
+      }
 
       // Update local accounts balance
       setAccounts(prev => prev.map(acc => {
@@ -263,15 +326,24 @@ export default function WalletsClient({
                 </div>
               </div>
 
-              {accounts.length > 1 && (
+              <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handleDeleteAccount(acc.id, acc.name)}
-                  className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
-                  title="Hapus Dompet"
+                  onClick={() => handleOpenEdit(acc)}
+                  className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  title="Edit Dompet & Saldo"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Edit3 className="w-4 h-4" />
                 </button>
-              )}
+                {accounts.length > 1 && (
+                  <button
+                    onClick={() => handleDeleteAccount(acc.id, acc.name)}
+                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                    title="Hapus Dompet"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -498,6 +570,100 @@ export default function WalletsClient({
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Dompet & Saldo */}
+      {editingAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+              <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                <Edit3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                Edit Dompet & Nominal
+              </h3>
+              <button onClick={() => setEditingAccount(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditAccountSubmit} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Nama Dompet / Rekening
+                </label>
+                <input 
+                  type="text" 
+                  required
+                  value={editAccountName}
+                  onChange={e => setEditAccountName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Jenis Akun
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["CASH", "BANK", "EWALLET"] as const).map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setEditAccountType(t)}
+                      className={`py-2 px-2 text-xs font-semibold rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                        editAccountType === t 
+                          ? "bg-blue-50 dark:bg-blue-950/50 border-blue-500 text-blue-700 dark:text-blue-300 shadow-2xs font-bold" 
+                          : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-750"
+                      }`}
+                    >
+                      {getAccountIcon(t)}
+                      {t === "CASH" ? "Tunai" : t === "BANK" ? "Bank" : "E-Wallet"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Saldo / Nominal Saat Ini (Rp)
+                  </label>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                    Koreksi nominal
+                  </span>
+                </div>
+                <input 
+                  type="number" 
+                  step="any"
+                  required
+                  value={editAccountBalance}
+                  onChange={e => setEditAccountBalance(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  Ubah angka ini jika ada salah ketik saldo awal atau penyesuaian selisih uang fisik.
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  disabled={savingEditAccount || !editAccountName.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-colors"
+                >
+                  {savingEditAccount ? "Menyimpan..." : "Simpan Perubahan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingAccount(null)}
                   className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
                 >
                   Batal
