@@ -43,7 +43,7 @@ export default function LoginPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
-              TON&apos;s BUDGET TRACKER
+              Atur Duit
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Masuk untuk mengelola keuangan dan budget bulanan Anda

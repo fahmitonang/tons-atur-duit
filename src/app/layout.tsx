@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TON's BUDGET TRACKER",
-  description: "Aplikasi pencatat keuangan pribadi dan kontrol budget harian TON's BUDGET TRACKER",
+  title: "Atur Duit",
+  description: "Aplikasi pencatat keuangan pribadi dan kontrol budget harian Atur Duit",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Budget Tracker"
+    title: "Atur Duit"
   },
   icons: {
     icon: "/icon.svg",

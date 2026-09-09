@@ -1,7 +1,7 @@
 {
-  "name": "TON's BUDGET TRACKER",
-  "short_name": "Budget Tracker",
-  "description": "Aplikasi pencatat keuangan pribadi dan kontrol budget harian",
+  "name": "Atur Duit",
+  "short_name": "Atur Duit",
+  "description": "Aplikasi pencatat keuangan pribadi dan kontrol budget harian Atur Duit",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",

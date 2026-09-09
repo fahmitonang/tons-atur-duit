@@ -61,7 +61,7 @@ export default function RegisterPage() {
               Daftar Akun Baru
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Buat akun untuk memulai pencatatan keuangan di TON&apos;s BUDGET TRACKER
+              Buat akun untuk memulai pencatatan keuangan di Atur Duit
             </p>
           </div>
         </div>

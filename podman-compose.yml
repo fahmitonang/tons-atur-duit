@@ -1,10 +1,10 @@
 services:
   app:
-    image: tons-budget-tracker:latest
+    image: aturduit:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tons-budget-tracker
+    container_name: aturduit-app
     restart: always
     ports:
       - "3000:3000"

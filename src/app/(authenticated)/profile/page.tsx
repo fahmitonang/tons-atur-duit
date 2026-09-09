@@ -282,7 +282,7 @@ export default function ProfilePage() {
 
       {/* Version & App Branding */}
       <div className="text-center pt-4 pb-2 text-gray-400 dark:text-gray-500 space-y-1">
-        <p className="text-xs font-bold tracking-wider uppercase">TON&apos;s BUDGET TRACKER</p>
+        <p className="text-xs font-bold tracking-wider uppercase">ATUR DUIT</p>
         <p className="text-[11px]">Versi 1.1.0 • Financial Intelligence Edition</p>
       </div>
 
