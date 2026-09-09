@@ -53,3 +53,10 @@ nano .env
 # Build dan jalankan container
 sudo podman-compose up -d --build
 ```
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah lisensi [MIT](LICENSE) - lihat file [LICENSE](LICENSE) untuk rincian lengkap.
+
