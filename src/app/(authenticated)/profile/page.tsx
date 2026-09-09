@@ -308,13 +308,16 @@ export default function ProfilePage() {
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Keluar dari Akun?</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Anda perlu memasukkan email dan password kembali untuk masuk ke aplikasi.
+                Anda perlu memasukkan username dan password kembali untuk masuk ke aplikasi.
               </p>
             </div>
             <div className="flex gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={async () => {
+                  await signOut({ redirect: false });
+                  window.location.href = "/login";
+                }}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm transition-colors"
               >
                 Ya, Keluar

@@ -64,6 +64,13 @@ export const authOptions: NextAuthOptions = {
         session.user.username = token.username as string;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return url;
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) return url;
+      } catch {}
+      return baseUrl;
     }
   },
   pages: {
