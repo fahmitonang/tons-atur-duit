@@ -43,7 +43,7 @@ Script akan otomatis memeriksa konfigurasi `.env`, menyiapkan dependensi, memper
 ### 2. Di Server (Podman / Docker Compose)
 ```bash
 # Clone repository
-git clone https://github.com/fahmitonang/tons-budget-tracker.git budget_tracker
+git clone https://github.com/fahmitonang/tons-atur-duit.git budget_tracker
 cd budget_tracker
 
 # Siapkan file konfigurasi environment
