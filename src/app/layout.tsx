@@ -23,8 +23,11 @@ export const metadata: Metadata = {
     title: "Atur Duit"
   },
   icons: {
-    icon: "/icon.svg",
-    apple: "/icon.svg"
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" }
+    ],
+    apple: "/icon.png"
   }
 };
 

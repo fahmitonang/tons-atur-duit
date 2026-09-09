@@ -29,3 +29,4 @@ export function getPaymentMethodLabel(method?: string | null): string {
   const found = PAYMENT_METHODS.find(p => p.id === method);
   return found ? found.shortLabel : method;
 }
+
