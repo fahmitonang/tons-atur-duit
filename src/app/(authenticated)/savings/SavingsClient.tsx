@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { 
   createSavingsGoal, 
@@ -12,6 +10,7 @@ import {
   depositToGoal, 
   withdrawFromGoal 
 } from "./actions";
+import { parseDateInputToNoonUTC, formatDisplayDate } from "@/lib/dateUtils";
 import { 
   Target, 
   PlusCircle, 
@@ -108,7 +107,7 @@ export default function SavingsClient({
 
     setCreating(true);
     try {
-      const dateObj = targetDate ? new Date(targetDate) : null;
+      const dateObj = targetDate ? parseDateInputToNoonUTC(targetDate) : null;
       const created = await createSavingsGoal(name.trim(), amountNum, dateObj, color);
       setGoals(prev => [...prev, created]);
       setName("");
@@ -309,7 +308,7 @@ export default function SavingsClient({
                         {g.targetDate && (
                           <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
                             <Calendar className="w-3 h-3" />
-                            Target: {format(new Date(g.targetDate), "dd MMM yyyy", { locale: idLocale })}
+                            Target: {formatDisplayDate(g.targetDate, "dd MMM yyyy")}
                           </p>
                         )}
                       </div>

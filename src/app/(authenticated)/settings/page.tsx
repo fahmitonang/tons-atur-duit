@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import SettingsForm from "./SettingsForm";
 import { redirect } from "next/navigation";
+import { getJakartaDateParts } from "@/lib/dateUtils";
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -10,8 +11,7 @@ export default async function SettingsPage() {
   if (!session?.user?.id) redirect('/login');
 
   const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentYear = currentDate.getFullYear();
+  const { year: currentYear, month: currentMonth } = getJakartaDateParts(currentDate);
 
   // Fetch all categories and their budgets so user can toggle months in UI
   const categories = await prisma.category.findMany({

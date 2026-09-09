@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
 import { BarChart3, TrendingUp } from "lucide-react";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 type DailyData = {
   date: Date;
@@ -91,7 +90,7 @@ export default function DailyTrendChart({
       {/* Interactive Tooltip Card */}
       {hoveredDay && (
         <div className="p-2 rounded-xl bg-gray-900 text-white text-xs flex justify-between items-center animate-fadeIn shadow-sm">
-          <span>{format(new Date(hoveredDay.date), "dd MMMM yyyy", { locale: idLocale })}</span>
+          <span>{formatDisplayDate(hoveredDay.date, "dd MMMM yyyy")}</span>
           <strong className="font-bold text-emerald-400">{formatter.format(hoveredDay.amount)}</strong>
         </div>
       )}

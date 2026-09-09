@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { format, isToday, isYesterday } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
 import { updateTransaction, deleteTransaction } from "./actions";
 import toast from "react-hot-toast";
 import { 
@@ -23,6 +21,12 @@ import {
   CreditCard
 } from "lucide-react";
 import { PAYMENT_METHODS, getPaymentMethodLabel } from "@/lib/paymentMethod";
+import { 
+  toJakartaYMD, 
+  getJakartaDateParts, 
+  formatDateHeader, 
+  parseDateInputToNoonUTC 
+} from "@/lib/dateUtils";
 
 type Transaction = {
   id: string;
@@ -44,18 +48,6 @@ type Account = {
   id: string;
   name: string;
 };
-
-function parseLocalDate(dateInput: Date | string): Date {
-  if (dateInput instanceof Date) return dateInput;
-  const d = new Date(dateInput);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function formatDateHeader(date: Date): string {
-  if (isToday(date)) return "Hari ini";
-  if (isYesterday(date)) return "Kemarin";
-  return format(date, "EEEE, dd MMMM yyyy", { locale: idLocale });
-}
 
 export default function HistoryClient({ 
   initialTransactions, 
@@ -102,13 +94,12 @@ export default function HistoryClient({
   // Trigger Edit Modal
   const handleOpenEdit = (t: Transaction) => {
     setEditingTransaction(t);
-    const dateObj = t.date instanceof Date ? t.date : new Date(t.date);
     setEditForm({
       categoryId: t.category.id,
       accountId: t.account?.id || (accounts[0]?.id || ""),
       paymentMethod: t.paymentMethod || "CASH",
       amount: t.amount.toString(),
-      date: format(dateObj, 'yyyy-MM-dd'),
+      date: toJakartaYMD(t.date),
       description: t.description || ""
     });
   };
@@ -126,18 +117,22 @@ export default function HistoryClient({
 
     setSavingEdit(true);
     try {
-      const [year, month, day] = editForm.date.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day);
+      const targetDate = parseDateInputToNoonUTC(editForm.date);
 
-      await updateTransaction(
+      const res = await updateTransaction(
         editingTransaction.id,
         editForm.categoryId,
         parsed,
-        localDate,
+        targetDate,
         editForm.description.trim(),
         editForm.accountId || undefined,
         editForm.paymentMethod
       );
+
+      if (res && !res.success) {
+        toast.error(res.error || "Gagal memperbarui transaksi");
+        return;
+      }
 
       const updatedCategory = categories.find(c => c.id === editForm.categoryId) || editingTransaction.category;
       const updatedAccount = accounts.find(a => a.id === editForm.accountId) || editingTransaction.account;
@@ -151,7 +146,7 @@ export default function HistoryClient({
             account: updatedAccount,
             paymentMethod: editForm.paymentMethod,
             amount: parsed,
-            date: localDate,
+            date: targetDate,
             description: editForm.description.trim() || null
           };
         }
@@ -172,7 +167,11 @@ export default function HistoryClient({
     if (!deletingTransaction) return;
     setIsDeleting(true);
     try {
-      await deleteTransaction(deletingTransaction.id);
+      const res = await deleteTransaction(deletingTransaction.id);
+      if (res && !res.success) {
+        toast.error(res.error || "Gagal menghapus transaksi");
+        return;
+      }
       setTransactions(prev => prev.filter(t => t.id !== deletingTransaction.id));
       setDeletingTransaction(null);
       toast.success("Transaksi berhasil dihapus & saldo disesuaikan");
@@ -205,11 +204,12 @@ export default function HistoryClient({
     const map = new Map<string, { date: Date; items: Transaction[]; totalIn: number; totalOut: number }>();
 
     filteredTransactions.forEach(t => {
-      const localDate = parseLocalDate(t.date);
-      const key = format(localDate, "yyyy-MM-dd");
+      const key = toJakartaYMD(t.date);
+      const { year, month, day } = getJakartaDateParts(t.date);
+      const groupDate = new Date(year, month - 1, day);
 
       if (!map.has(key)) {
-        map.set(key, { date: localDate, items: [], totalIn: 0, totalOut: 0 });
+        map.set(key, { date: groupDate, items: [], totalIn: 0, totalOut: 0 });
       }
 
       const group = map.get(key)!;
@@ -295,7 +295,7 @@ export default function HistoryClient({
       {/* Grouped Transaction List */}
       <div className="space-y-4 pb-8">
         {groupedTransactions.map(group => (
-          <div key={format(group.date, "yyyy-MM-dd")} className="space-y-2">
+          <div key={toJakartaYMD(group.date)} className="space-y-2">
             {/* Date Header with Daily Subtotal */}
             <div className="flex justify-between items-center px-1 text-xs text-gray-500 dark:text-gray-400">
               <span className="font-bold text-gray-800 dark:text-gray-200">

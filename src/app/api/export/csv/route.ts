@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
 import { getPaymentMethodLabel } from "@/lib/paymentMethod";
+import { toJakartaYMD, getWIBStartOfDayInUTC, getWIBEndOfDayInUTC } from "@/lib/dateUtils";
 
 export async function GET(req: Request) {
   try {
@@ -24,8 +25,9 @@ export async function GET(req: Request) {
       const m = parseInt(month);
       const y = parseInt(year);
       if (!isNaN(m) && !isNaN(y) && m >= 1 && m <= 12 && y >= 2000 && y <= 2100) {
-        const startDate = new Date(y, m - 1, 1);
-        const endDate = new Date(y, m, 0, 23, 59, 59, 999);
+        const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+        const startDate = getWIBStartOfDayInUTC(y, m - 1, 1);
+        const endDate = getWIBEndOfDayInUTC(y, m - 1, lastDay);
         whereClause.date = { gte: startDate, lte: endDate };
       }
     }
@@ -42,7 +44,7 @@ export async function GET(req: Request) {
     // Generate CSV lines
     const headers = ["ID", "Tanggal", "Kategori", "Jenis", "Dompet", "Metode Pembayaran", "Nominal (Rp)", "Keterangan"];
     const rows = transactions.map(t => {
-      const formattedDate = format(new Date(t.date), "yyyy-MM-dd");
+      const formattedDate = toJakartaYMD(t.date);
       const categoryName = `"${(t.category?.name || "").replace(/"/g, '""')}"`;
       const type = t.category?.type === "INCOME" ? "Pemasukan" : "Pengeluaran";
       const accountName = `"${(t.account?.name || "Tunai").replace(/"/g, '""')}"`;

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import TransactionForm from "./TransactionForm";
 import { redirect } from "next/navigation";
 import { getBillingPeriod } from "@/lib/period";
+import { getJakartaDateParts } from "@/lib/dateUtils";
 
 export default async function TransactionPage() {
   const session = await getServerSession(authOptions);
@@ -18,8 +19,7 @@ export default async function TransactionPage() {
   const cutoffDay = user?.paydayCutoffDay || 1;
   const currentDate = new Date();
   const { startDate, endDate } = getBillingPeriod(currentDate, cutoffDay);
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentYear = currentDate.getFullYear();
+  const { year: currentYear, month: currentMonth } = getJakartaDateParts(currentDate);
 
   // Categories
   const categories = await prisma.category.findMany({

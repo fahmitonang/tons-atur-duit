@@ -26,6 +26,7 @@ import ExpenseDonutChart from "@/components/ExpenseDonutChart";
 import DailyTrendChart from "@/components/DailyTrendChart";
 import { getBillingPeriod } from "@/lib/period";
 import { getPaymentMethodLabel } from "@/lib/paymentMethod";
+import { toJakartaYMD, formatDisplayDate } from "@/lib/dateUtils";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -139,25 +140,32 @@ export default async function DashboardPage() {
 
   // Build daily data for Daily Spending Trend Chart
   const dailyDataMap = new Map<string, number>();
-  const loopDate = new Date(startDate);
-  while (loopDate <= endDate) {
+  const startYMD = toJakartaYMD(startDate);
+  const endYMD = toJakartaYMD(endDate);
+  const [sY, sM, sD] = startYMD.split('-').map(Number);
+  const [eY, eM, eD] = endYMD.split('-').map(Number);
+  const loopDate = new Date(sY, sM - 1, sD);
+  const finishDate = new Date(eY, eM - 1, eD);
+
+  while (loopDate <= finishDate) {
     const key = format(loopDate, "yyyy-MM-dd");
     dailyDataMap.set(key, 0);
     loopDate.setDate(loopDate.getDate() + 1);
   }
 
   expenseTransactions.forEach(t => {
-    const key = format(new Date(t.date), "yyyy-MM-dd");
+    const key = toJakartaYMD(t.date);
     if (dailyDataMap.has(key)) {
       dailyDataMap.set(key, (dailyDataMap.get(key) || 0) + t.amount);
     }
   });
 
   const dailyTrendData = Array.from(dailyDataMap.entries()).map(([dateStr, amount]) => {
-    const d = new Date(dateStr);
+    const [y, m, dNum] = dateStr.split('-').map(Number);
+    const d = new Date(y, m - 1, dNum);
     return {
       date: d,
-      dayLabel: format(d, "d"),
+      dayLabel: dNum.toString(),
       amount
     };
   });
@@ -227,8 +235,8 @@ export default async function DashboardPage() {
 
   // Period Display Label
   const periodLabel = cutoffDay === 1
-    ? format(currentDate, "MMMM yyyy", { locale: idLocale })
-    : `${format(startDate, "d MMM", { locale: idLocale })} - ${format(endDate, "d MMM yyyy", { locale: idLocale })}`;
+    ? formatDisplayDate(currentDate, "MMMM yyyy")
+    : `${formatDisplayDate(startDate, "d MMM")} - ${formatDisplayDate(endDate, "d MMM yyyy")}`;
 
   // Recent 5 transactions
   const recentTransactions = transactions.slice(0, 5);
@@ -637,7 +645,7 @@ export default async function DashboardPage() {
                     )}
                   </div>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                    {format(new Date(t.date), "dd MMM yyyy", { locale: idLocale })}
+                    {formatDisplayDate(t.date, "dd MMM yyyy")}
                     {t.description ? ` • ${t.description}` : ''}
                   </p>
                 </div>

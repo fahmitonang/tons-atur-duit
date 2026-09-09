@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { parseDateInputToNoonUTC, toJakartaYMD } from "@/lib/dateUtils";
 
 export async function createAccount(name: string, type: "CASH" | "BANK" | "EWALLET", startingBalance: number = 0) {
   const session = await getServerSession(authOptions);
@@ -128,7 +129,7 @@ export async function transferFunds(
   toAccountId: string,
   amount: number,
   description: string,
-  date: Date
+  date: Date | string
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
@@ -140,6 +141,10 @@ export async function transferFunds(
   if (!amount || isNaN(amount) || amount <= 0) {
     return { success: false, error: "Nominal transfer harus lebih dari 0" };
   }
+
+  const targetDate = typeof date === "string"
+    ? parseDateInputToNoonUTC(date)
+    : parseDateInputToNoonUTC(toJakartaYMD(date));
 
   try {
     // All reads + balance check + writes inside interactive $transaction to prevent race conditions
@@ -187,7 +192,7 @@ export async function transferFunds(
           toAccountId,
           amount,
           description: description?.trim() || null,
-          date: date || new Date(),
+          date: targetDate,
           userId: session.user.id
         },
         include: {

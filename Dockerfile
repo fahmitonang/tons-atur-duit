@@ -1,4 +1,6 @@
 FROM node:22-alpine AS base
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Jakarta
 
 # Stage 1: Install dependencies
 FROM base AS deps
@@ -25,6 +27,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV TZ=Asia/Jakarta
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

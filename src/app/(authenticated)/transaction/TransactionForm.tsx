@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { addTransaction } from "./actions";
-import { format } from "date-fns";
+import { toJakartaYMD, parseDateInputToNoonUTC } from "@/lib/dateUtils";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { 
@@ -64,7 +64,7 @@ export default function TransactionForm({
     return "CASH";
   });
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [date, setDate] = useState(() => toJakartaYMD(new Date()));
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -121,17 +121,21 @@ export default function TransactionForm({
 
     setLoading(true);
     try {
-      const [year, month, day] = date.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day);
+      const targetDate = parseDateInputToNoonUTC(date);
 
-      await addTransaction(
+      const res = await addTransaction(
         categoryId, 
         parsedAmount, 
-        localDate,
+        targetDate,
         description.trim(),
         accountId || undefined,
         paymentMethod
       );
+
+      if (res && !res.success) {
+        toast.error(res.error || "Gagal mencatat transaksi");
+        return;
+      }
 
       setAmount("");
       setDescription("");

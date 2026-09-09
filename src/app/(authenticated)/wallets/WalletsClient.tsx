@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
 import toast from "react-hot-toast";
 import { 
   createAccount, 
@@ -23,18 +21,19 @@ import {
   X, 
   Calendar, 
   FileText, 
-  Sparkles,
-  ArrowRight
+  AlertTriangle,
+  ArrowRight,
+  TrendingDown,
+  Sparkles
 } from "lucide-react";
+import { toJakartaYMD, parseDateInputToNoonUTC, formatDisplayDate } from "@/lib/dateUtils";
 
 type Account = {
   id: string;
   name: string;
   type: "CASH" | "BANK" | "EWALLET";
   balance: number;
-  _count?: {
-    transactions: number;
-  };
+  _count?: { transactions: number };
 };
 
 type TransferItem = {
@@ -46,48 +45,49 @@ type TransferItem = {
   toAccount: { id: string; name: string; type: string };
 };
 
-export default function WalletsClient({
-  initialAccounts,
-  recentTransfers
-}: {
+export default function WalletsClient({ 
+  initialAccounts, 
+  recentTransfers = [] 
+}: { 
   initialAccounts: Account[];
-  recentTransfers: TransferItem[];
+  recentTransfers?: TransferItem[];
 }) {
-  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [transfers, setTransfers] = useState<TransferItem[]>(recentTransfers);
+  const router = useRouter();
 
-  // Sync state when server props update (Bug #4 fix)
+  // Sync state when server props change (Bug #4 fix)
   useEffect(() => {
     setAccounts(initialAccounts);
-  }, [initialAccounts]);
-
-  useEffect(() => {
     setTransfers(recentTransfers);
-  }, [recentTransfers]);
+  }, [initialAccounts, recentTransfers]);
 
-  // Modals
+  // Modal State: Tambah Dompet
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showTransferModal, setShowTransferModal] = useState(false);
-
-  // Form: Add Account
   const [newAccountName, setNewAccountName] = useState("");
   const [newAccountType, setNewAccountType] = useState<"CASH" | "BANK" | "EWALLET">("BANK");
   const [startingBalance, setStartingBalance] = useState("");
   const [addingAccount, setAddingAccount] = useState(false);
 
-  // Form: Edit Account & Balance
+  // Modal State: Edit Dompet & Saldo
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [editAccountName, setEditAccountName] = useState("");
-  const [editAccountType, setEditAccountType] = useState<"CASH" | "BANK" | "EWALLET">("CASH");
+  const [editAccountType, setEditAccountType] = useState<"CASH" | "BANK" | "EWALLET">("BANK");
   const [editAccountBalance, setEditAccountBalance] = useState("");
   const [savingEditAccount, setSavingEditAccount] = useState(false);
+
+  // Modal State: Hapus Dompet
+  const [deletingAccount, setDeletingAccount] = useState<Account | null>(null);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  // Modal State: Transfer Dana
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Form: Transfer
   const [fromAccountId, setFromAccountId] = useState(accounts[0]?.id || "");
   const [toAccountId, setToAccountId] = useState(accounts[1]?.id || "");
   const [transferAmount, setTransferAmount] = useState("");
-  const [transferDate, setTransferDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [transferDate, setTransferDate] = useState(() => toJakartaYMD(new Date()));
   const [transferNotes, setTransferNotes] = useState("");
   const [transferring, setTransferring] = useState(false);
 
@@ -213,10 +213,9 @@ export default function WalletsClient({
 
     setTransferring(true);
     try {
-      const [year, month, day] = transferDate.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day);
+      const targetDate = parseDateInputToNoonUTC(transferDate);
 
-      const res = await transferFunds(fromAccountId, toAccountId, amountNum, transferNotes, localDate);
+      const res = await transferFunds(fromAccountId, toAccountId, amountNum, transferNotes, targetDate);
       if (!res.success) {
         toast.error(res.error || "Gagal memproses transfer");
         return;
@@ -236,7 +235,7 @@ export default function WalletsClient({
       if (fromAcc && toAcc) {
         setTransfers(prev => [{
           id: `t-${Date.now()}`,
-          date: localDate,
+          date: targetDate,
           amount: amountNum,
           description: transferNotes,
           fromAccount: fromAcc,
@@ -373,7 +372,7 @@ export default function WalletsClient({
                     <span>{tr.toAccount.name}</span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {format(new Date(tr.date), "dd MMM yyyy", { locale: idLocale })}
+                    {formatDisplayDate(tr.date, "dd MMM yyyy")}
                     {tr.description ? ` • ${tr.description}` : ''}
                   </p>
                 </div>
