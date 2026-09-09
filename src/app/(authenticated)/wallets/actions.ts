@@ -122,44 +122,46 @@ export async function transferFunds(
     throw new Error("Nominal transfer harus lebih dari 0");
   }
 
-  const fromAccount = await prisma.account.findFirst({
-    where: { id: fromAccountId, userId: session.user.id }
-  });
-
-  const toAccount = await prisma.account.findFirst({
-    where: { id: toAccountId, userId: session.user.id }
-  });
-
-  if (!fromAccount || !toAccount) {
-    throw new Error("Akun dompet tidak valid");
-  }
-
-  // Check sufficient balance
-  if (fromAccount.balance < amount) {
-    const formatter = new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
+  // All reads + balance check + writes inside interactive $transaction to prevent race conditions
+  const result = await prisma.$transaction(async (tx) => {
+    const fromAccount = await tx.account.findFirst({
+      where: { id: fromAccountId, userId: session.user.id }
     });
-    throw new Error(
-      `Saldo tidak mencukupi. Saldo dompet "${fromAccount.name}" saat ini ${formatter.format(fromAccount.balance)}, tidak mencukupi untuk transfer ${formatter.format(amount)}.`
-    );
-  }
 
-  // Execute transfer in a database transaction
-  const [updatedFrom, updatedTo, transferRecord] = await prisma.$transaction([
+    const toAccount = await tx.account.findFirst({
+      where: { id: toAccountId, userId: session.user.id }
+    });
+
+    if (!fromAccount || !toAccount) {
+      throw new Error("Akun dompet tidak valid");
+    }
+
+    // Check sufficient balance (atomically within the transaction)
+    if (fromAccount.balance < amount) {
+      const formatter = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+      });
+      throw new Error(
+        `Saldo tidak mencukupi. Saldo dompet "${fromAccount.name}" saat ini ${formatter.format(fromAccount.balance)}, tidak mencukupi untuk transfer ${formatter.format(amount)}.`
+      );
+    }
+
     // Deduct from source account
-    prisma.account.update({
+    const updatedFrom = await tx.account.update({
       where: { id: fromAccountId },
       data: { balance: { decrement: amount } }
-    }),
+    });
+
     // Add to target account
-    prisma.account.update({
+    const updatedTo = await tx.account.update({
       where: { id: toAccountId },
       data: { balance: { increment: amount } }
-    }),
+    });
+
     // Record transfer log
-    prisma.transfer.create({
+    const transferRecord = await tx.transfer.create({
       data: {
         fromAccountId,
         toAccountId,
@@ -172,11 +174,13 @@ export async function transferFunds(
         fromAccount: { select: { id: true, name: true, type: true } },
         toAccount: { select: { id: true, name: true, type: true } }
       }
-    })
-  ]);
+    });
+
+    return { updatedFrom, updatedTo, transferRecord };
+  });
 
   revalidatePath("/wallets");
   revalidatePath("/dashboard");
 
-  return { updatedFrom, updatedTo, transferRecord };
+  return result;
 }

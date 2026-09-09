@@ -17,31 +17,30 @@ export async function addTransaction(
 
   if (!amount || isNaN(amount) || amount <= 0) throw new Error("Jumlah transaksi tidak valid");
 
-  // Verify category belongs to user
-  const category = await prisma.category.findFirst({
-    where: { id: categoryId, userId: session.user.id }
-  });
-
-  if (!category) throw new Error("Kategori tidak ditemukan");
-
-  let validAccountId: string | null = null;
-  if (accountId) {
-    const acc = await prisma.account.findFirst({
-      where: { id: accountId, userId: session.user.id }
-    });
-    if (acc) {
-      validAccountId = acc.id;
-    }
-  }
-
-  // Use transaction to create record and update account balance
+  // Use interactive transaction to verify and create record and update account balance atomically
   await prisma.$transaction(async (tx) => {
+    const category = await tx.category.findFirst({
+      where: { id: categoryId, userId: session.user.id }
+    });
+
+    if (!category) throw new Error("Kategori tidak ditemukan");
+
+    let validAccountId: string | null = null;
+    if (accountId) {
+      const acc = await tx.account.findFirst({
+        where: { id: accountId, userId: session.user.id }
+      });
+      if (acc) {
+        validAccountId = acc.id;
+      }
+    }
+
     await tx.transaction.create({
       data: {
         categoryId,
         amount,
         date,
-        description,
+        description: description?.trim() || null,
         accountId: validAccountId
       }
     });
@@ -64,4 +63,5 @@ export async function addTransaction(
   revalidatePath("/dashboard");
   revalidatePath("/history");
   revalidatePath("/wallets");
+  revalidatePath("/transaction");
 }

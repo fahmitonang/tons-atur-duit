@@ -18,30 +18,44 @@ export async function updateTransaction(
 
   if (!amount || isNaN(amount) || amount <= 0) throw new Error("Jumlah transaksi tidak valid");
 
-  const oldTx = await prisma.transaction.findFirst({
-    where: { id, category: { userId: session.user.id } },
-    include: { category: true }
-  });
+  // Normalize accountId: empty string → null, undefined → keep old
+  const normalizedAccountId: string | null | undefined =
+    accountId === "" ? null : accountId;
 
-  if (!oldTx) throw new Error("Transaksi tidak ditemukan");
-
-  const newCategory = await prisma.category.findFirst({
-    where: { id: categoryId, userId: session.user.id }
-  });
-
-  if (!newCategory) throw new Error("Kategori baru tidak ditemukan");
-
-  let targetAccountId = accountId !== undefined ? accountId : oldTx.accountId;
-  if (targetAccountId) {
-    const acc = await prisma.account.findFirst({
-      where: { id: targetAccountId, userId: session.user.id }
-    });
-    if (!acc) targetAccountId = null;
-  }
-
-  // Execute ledger adjustment in transaction
+  // All reads and writes inside $transaction to prevent race conditions
   await prisma.$transaction(async (tx) => {
-    // 1. Revert old transaction impact
+    // 1. Read old transaction atomically
+    const oldTx = await tx.transaction.findFirst({
+      where: { id, category: { userId: session.user.id } },
+      include: { category: true }
+    });
+
+    if (!oldTx) throw new Error("Transaksi tidak ditemukan");
+
+    // 2. Verify new category belongs to user
+    const newCategory = await tx.category.findFirst({
+      where: { id: categoryId, userId: session.user.id }
+    });
+
+    if (!newCategory) throw new Error("Kategori baru tidak ditemukan");
+
+    // 3. Determine target account
+    let targetAccountId: string | null;
+    if (normalizedAccountId !== undefined) {
+      targetAccountId = normalizedAccountId;
+    } else {
+      targetAccountId = oldTx.accountId;
+    }
+
+    // 4. Validate target account if specified
+    if (targetAccountId) {
+      const acc = await tx.account.findFirst({
+        where: { id: targetAccountId, userId: session.user.id }
+      });
+      if (!acc) targetAccountId = null;
+    }
+
+    // 5. Revert old transaction impact on balance
     if (oldTx.accountId) {
       if (oldTx.category.type === "EXPENSE") {
         await tx.account.update({
@@ -56,7 +70,7 @@ export async function updateTransaction(
       }
     }
 
-    // 2. Apply new transaction impact
+    // 6. Apply new transaction impact
     if (targetAccountId) {
       if (newCategory.type === "EXPENSE") {
         await tx.account.update({
@@ -71,7 +85,7 @@ export async function updateTransaction(
       }
     }
 
-    // 3. Update transaction record
+    // 7. Update transaction record
     await tx.transaction.update({
       where: { id },
       data: {
@@ -93,24 +107,23 @@ export async function deleteTransaction(id: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const tx = await prisma.transaction.findFirst({
-    where: { id, category: { userId: session.user.id } },
-    include: { category: true }
-  });
-
-  if (!tx) throw new Error("Transaksi tidak ditemukan");
-
+  // All reads and writes inside $transaction to prevent race conditions
   await prisma.$transaction(async (prismaTx) => {
+    const tx = await prismaTx.transaction.findFirst({
+      where: { id, category: { userId: session.user.id } },
+      include: { category: true }
+    });
+
+    if (!tx) throw new Error("Transaksi tidak ditemukan");
+
     // Refund / reverse account balance if linked to wallet
     if (tx.accountId) {
       if (tx.category.type === "EXPENSE") {
-        // Refund expense back to wallet
         await prismaTx.account.update({
           where: { id: tx.accountId },
           data: { balance: { increment: tx.amount } }
         });
       } else {
-        // Deduct deleted income from wallet
         await prismaTx.account.update({
           where: { id: tx.accountId },
           data: { balance: { decrement: tx.amount } }

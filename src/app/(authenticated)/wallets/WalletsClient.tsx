@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import toast from "react-hot-toast";
@@ -50,6 +51,7 @@ export default function WalletsClient({
   initialAccounts: Account[];
   recentTransfers: TransferItem[];
 }) {
+  const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>(initialAccounts);
   const [transfers, setTransfers] = useState<TransferItem[]>(recentTransfers);
 
@@ -115,6 +117,7 @@ export default function WalletsClient({
       setStartingBalance("");
       setShowAddModal(false);
       toast.success(`Dompet "${createdAcc.name}" berhasil dibuat!`);
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal membuat dompet");
     } finally {
@@ -129,6 +132,7 @@ export default function WalletsClient({
       await deleteAccount(id);
       setAccounts(prev => prev.filter(a => a.id !== id));
       toast.success("Dompet berhasil dihapus");
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal menghapus dompet");
     }
@@ -181,6 +185,7 @@ export default function WalletsClient({
       setTransferNotes("");
       setShowTransferModal(false);
       toast.success("Transfer antar dompet berhasil!");
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal memproses transfer");
     } finally {

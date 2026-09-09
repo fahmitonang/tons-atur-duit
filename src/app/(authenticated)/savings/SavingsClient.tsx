@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import toast from "react-hot-toast";
@@ -57,11 +58,17 @@ export default function SavingsClient({
   initialGoals: SavingsGoal[];
   accounts: Account[];
 }) {
+  const router = useRouter();
   const [goals, setGoals] = useState<SavingsGoal[]>(initialGoals);
+  const [accountList, setAccountList] = useState<Account[]>(accounts);
 
   useEffect(() => {
     setGoals(initialGoals);
   }, [initialGoals]);
+
+  useEffect(() => {
+    setAccountList(accounts);
+  }, [accounts]);
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -127,6 +134,7 @@ export default function SavingsClient({
       await deleteSavingsGoal(id);
       setGoals(prev => prev.filter(g => g.id !== id));
       toast.success("Celengan berhasil dihapus");
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal menghapus celengan");
     }
@@ -150,10 +158,17 @@ export default function SavingsClient({
         }
         return g;
       }));
+      setAccountList(prev => prev.map(a => {
+        if (a.id === selectedAccountId) {
+          return { ...a, balance: a.balance - amountNum };
+        }
+        return a;
+      }));
       setDepositGoal(null);
       setActionAmount("");
       setActionNote("");
       toast.success(`Berhasil setor ${formatter.format(amountNum)} ke ${depositGoal.name}!`);
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal menyetor dana");
     } finally {
@@ -179,10 +194,17 @@ export default function SavingsClient({
         }
         return g;
       }));
+      setAccountList(prev => prev.map(a => {
+        if (a.id === selectedAccountId) {
+          return { ...a, balance: a.balance + amountNum };
+        }
+        return a;
+      }));
       setWithdrawGoal(null);
       setActionAmount("");
       setActionNote("");
       toast.success(`Berhasil menarik ${formatter.format(amountNum)} dari ${withdrawGoal.name}!`);
+      router.refresh();
     } catch (err: any) {
       toast.error(err?.message || "Gagal menarik dana");
     } finally {
@@ -478,7 +500,7 @@ export default function SavingsClient({
                   onChange={e => setSelectedAccountId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
-                  {accounts.map(a => (
+                  {accountList.map(a => (
                     <option key={a.id} value={a.id}>{a.name} ({formatter.format(a.balance)})</option>
                   ))}
                 </select>
@@ -558,7 +580,7 @@ export default function SavingsClient({
                   onChange={e => setSelectedAccountId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
                 >
-                  {accounts.map(a => (
+                  {accountList.map(a => (
                     <option key={a.id} value={a.id}>{a.name} ({formatter.format(a.balance)})</option>
                   ))}
                 </select>

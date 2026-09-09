@@ -72,6 +72,8 @@ export async function setMonthlyBudget(categoryId: string, limit: number, month:
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   if (!limit || isNaN(limit) || limit <= 0) throw new Error("Limit budget tidak valid");
+  if (!month || isNaN(month) || month < 1 || month > 12) throw new Error("Bulan tidak valid (1-12)");
+  if (!year || isNaN(year) || year < 2000 || year > 2100) throw new Error("Tahun tidak valid (2000-2100)");
 
   const category = await prisma.category.findFirst({
     where: { id: categoryId, userId: session.user.id }
@@ -100,11 +102,15 @@ export async function setMonthlyBudget(categoryId: string, limit: number, month:
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  revalidatePath("/transaction");
 }
 
 export async function deleteMonthlyBudget(categoryId: string, month: number, year: number) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (!month || isNaN(month) || month < 1 || month > 12) throw new Error("Bulan tidak valid (1-12)");
+  if (!year || isNaN(year) || year < 2000 || year > 2100) throw new Error("Tahun tidak valid (2000-2100)");
 
   const category = await prisma.category.findFirst({
     where: { id: categoryId, userId: session.user.id }
@@ -122,11 +128,19 @@ export async function deleteMonthlyBudget(categoryId: string, month: number, yea
 
   revalidatePath("/settings");
   revalidatePath("/dashboard");
+  revalidatePath("/transaction");
 }
 
 export async function copyBudgetFromPreviousMonth(targetMonth: number, targetYear: number) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
+
+  if (!targetMonth || isNaN(targetMonth) || targetMonth < 1 || targetMonth > 12) {
+    throw new Error("Bulan target tidak valid (1-12)");
+  }
+  if (!targetYear || isNaN(targetYear) || targetYear < 2000 || targetYear > 2100) {
+    throw new Error("Tahun target tidak valid (2000-2100)");
+  }
 
   const prevMonth = targetMonth === 1 ? 12 : targetMonth - 1;
   const prevYear = targetMonth === 1 ? targetYear - 1 : targetYear;

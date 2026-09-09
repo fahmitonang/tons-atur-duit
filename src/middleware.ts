@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Fix #18: protect all authenticated routes in middleware, not just root
-const protectedPaths = ['/dashboard', '/history', '/transaction', '/settings', '/profile'];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -16,5 +13,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/history/:path*', '/transaction/:path*', '/settings/:path*', '/profile/:path*'],
+  matcher: [
+    '/',
+    '/dashboard/:path*',
+    '/history/:path*',
+    '/transaction/:path*',
+    '/settings/:path*',
+    '/profile/:path*',
+    '/wallets/:path*',
+    '/savings/:path*'
+  ],
 }

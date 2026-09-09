@@ -3,15 +3,21 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import TransactionForm from "./TransactionForm";
 import { redirect } from "next/navigation";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { getBillingPeriod } from "@/lib/period";
 
 export default async function TransactionPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login');
 
+  // Fetch user settings (paydayCutoffDay)
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { paydayCutoffDay: true }
+  });
+
+  const cutoffDay = user?.paydayCutoffDay || 1;
   const currentDate = new Date();
-  const startDate = startOfMonth(currentDate);
-  const endDate = endOfMonth(currentDate);
+  const { startDate, endDate } = getBillingPeriod(currentDate, cutoffDay);
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 

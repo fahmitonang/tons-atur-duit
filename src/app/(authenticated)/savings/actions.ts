@@ -76,13 +76,14 @@ export async function deleteSavingsGoal(id: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const goal = await prisma.savingsGoal.findFirst({
-    where: { id, userId: session.user.id }
-  });
-
-  if (!goal) throw new Error("Target tabungan tidak ditemukan");
-
+  // All inside $transaction to prevent race conditions & data loss
   await prisma.$transaction(async (tx) => {
+    const goal = await tx.savingsGoal.findFirst({
+      where: { id, userId: session.user.id }
+    });
+
+    if (!goal) throw new Error("Target tabungan tidak ditemukan");
+
     // If goal has funds, refund back to user's first account so funds aren't lost
     if (goal.currentAmount > 0) {
       const primaryAcc = await tx.account.findFirst({
@@ -90,12 +91,14 @@ export async function deleteSavingsGoal(id: string) {
         orderBy: { createdAt: "asc" }
       });
 
-      if (primaryAcc) {
-        await tx.account.update({
-          where: { id: primaryAcc.id },
-          data: { balance: { increment: goal.currentAmount } }
-        });
+      if (!primaryAcc) {
+        throw new Error("Dompet utama tidak ditemukan untuk pengembalian dana. Tidak dapat menghapus celengan yang masih memiliki saldo.");
       }
+
+      await tx.account.update({
+        where: { id: primaryAcc.id },
+        data: { balance: { increment: goal.currentAmount } }
+      });
     }
 
     await tx.savingsGoal.delete({
@@ -121,34 +124,37 @@ export async function depositToGoal(
     throw new Error("Nominal setor harus lebih dari 0");
   }
 
-  const goal = await prisma.savingsGoal.findFirst({
-    where: { id: goalId, userId: session.user.id }
-  });
-  if (!goal) throw new Error("Target tabungan tidak ditemukan");
+  // All reads + balance check + writes inside interactive $transaction to prevent race conditions
+  await prisma.$transaction(async (tx) => {
+    const goal = await tx.savingsGoal.findFirst({
+      where: { id: goalId, userId: session.user.id }
+    });
+    if (!goal) throw new Error("Target tabungan tidak ditemukan");
 
-  const account = await prisma.account.findFirst({
-    where: { id: accountId, userId: session.user.id }
-  });
-  if (!account) throw new Error("Dompet sumber tidak valid");
+    const account = await tx.account.findFirst({
+      where: { id: accountId, userId: session.user.id }
+    });
+    if (!account) throw new Error("Dompet sumber tidak valid");
 
-  if (account.balance < amount) {
-    const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
-    throw new Error(`Saldo dompet ${account.name} (${formatter.format(account.balance)}) tidak mencukupi untuk setor ${formatter.format(amount)}`);
-  }
+    if (account.balance < amount) {
+      const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+      throw new Error(`Saldo dompet ${account.name} (${formatter.format(account.balance)}) tidak mencukupi untuk setor ${formatter.format(amount)}`);
+    }
 
-  await prisma.$transaction([
     // Deduct from wallet
-    prisma.account.update({
+    await tx.account.update({
       where: { id: accountId },
       data: { balance: { decrement: amount } }
-    }),
+    });
+
     // Increment goal currentAmount
-    prisma.savingsGoal.update({
+    await tx.savingsGoal.update({
       where: { id: goalId },
       data: { currentAmount: { increment: amount } }
-    }),
+    });
+
     // Create log
-    prisma.savingsGoalLog.create({
+    await tx.savingsGoalLog.create({
       data: {
         goalId,
         accountId,
@@ -156,8 +162,8 @@ export async function depositToGoal(
         note: note?.trim() || "Setoran tabungan",
         date: new Date()
       }
-    })
-  ]);
+    });
+  });
 
   revalidatePath("/savings");
   revalidatePath("/dashboard");
@@ -177,34 +183,37 @@ export async function withdrawFromGoal(
     throw new Error("Nominal penarikan harus lebih dari 0");
   }
 
-  const goal = await prisma.savingsGoal.findFirst({
-    where: { id: goalId, userId: session.user.id }
-  });
-  if (!goal) throw new Error("Target tabungan tidak ditemukan");
+  // All reads + balance check + writes inside interactive $transaction to prevent race conditions
+  await prisma.$transaction(async (tx) => {
+    const goal = await tx.savingsGoal.findFirst({
+      where: { id: goalId, userId: session.user.id }
+    });
+    if (!goal) throw new Error("Target tabungan tidak ditemukan");
 
-  const account = await prisma.account.findFirst({
-    where: { id: accountId, userId: session.user.id }
-  });
-  if (!account) throw new Error("Dompet tujuan tidak valid");
+    const account = await tx.account.findFirst({
+      where: { id: accountId, userId: session.user.id }
+    });
+    if (!account) throw new Error("Dompet tujuan tidak valid");
 
-  if (goal.currentAmount < amount) {
-    const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
-    throw new Error(`Saldo celengan (${formatter.format(goal.currentAmount)}) tidak mencukupi untuk ditarik ${formatter.format(amount)}`);
-  }
+    if (goal.currentAmount < amount) {
+      const formatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
+      throw new Error(`Saldo celengan (${formatter.format(goal.currentAmount)}) tidak mencukupi untuk ditarik ${formatter.format(amount)}`);
+    }
 
-  await prisma.$transaction([
     // Deduct from goal
-    prisma.savingsGoal.update({
+    await tx.savingsGoal.update({
       where: { id: goalId },
       data: { currentAmount: { decrement: amount } }
-    }),
+    });
+
     // Increment wallet
-    prisma.account.update({
+    await tx.account.update({
       where: { id: accountId },
       data: { balance: { increment: amount } }
-    }),
+    });
+
     // Create log
-    prisma.savingsGoalLog.create({
+    await tx.savingsGoalLog.create({
       data: {
         goalId,
         accountId,
@@ -212,11 +221,10 @@ export async function withdrawFromGoal(
         note: note?.trim() || "Penarikan tabungan",
         date: new Date()
       }
-    })
-  ]);
+    });
+  });
 
   revalidatePath("/savings");
   revalidatePath("/dashboard");
   revalidatePath("/wallets");
 }
-
