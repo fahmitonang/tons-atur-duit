@@ -20,8 +20,7 @@ export default async function HistoryPage() {
     },
     orderBy: {
       date: 'desc'
-    },
-    take: 100 // Limit to recent 100 for performance
+    }
   });
 
   const categories = await prisma.category.findMany({

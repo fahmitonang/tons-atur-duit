@@ -18,14 +18,20 @@ import {
   Search,
   Download,
   Wallet,
-  CreditCard
+  CreditCard,
+  ChevronLeft,
+  ChevronRight,
+  CalendarRange,
+  RotateCcw
 } from "lucide-react";
 import { PAYMENT_METHODS, getPaymentMethodLabel } from "@/lib/paymentMethod";
 import { 
   toJakartaYMD, 
   getJakartaDateParts, 
   formatDateHeader, 
-  parseDateInputToNoonUTC 
+  parseDateInputToNoonUTC,
+  getDateRangePresets,
+  formatDisplayDate
 } from "@/lib/dateUtils";
 
 type Transaction = {
@@ -63,10 +69,24 @@ export default function HistoryClient({
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Date Range Filter State
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [showDateFilter, setShowDateFilter] = useState<boolean>(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(20);
+
   // Sync state when server props change (Bug #4 fix)
   useEffect(() => {
     setTransactions(initialTransactions);
   }, [initialTransactions]);
+
+  // Reset page when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, selectedCategory, searchQuery, startDate, endDate, pageSize]);
 
   // Edit Modal State
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -182,11 +202,38 @@ export default function HistoryClient({
     }
   };
 
+  const presets = useMemo(() => getDateRangePresets(), []);
+
+  const handleApplyPreset = (preset: "all" | "this_month" | "last_month" | "last_7" | "last_30") => {
+    if (preset === "all") {
+      setStartDate("");
+      setEndDate("");
+    } else if (preset === "this_month") {
+      setStartDate(presets.thisMonthStart);
+      setEndDate(presets.thisMonthEnd);
+    } else if (preset === "last_month") {
+      setStartDate(presets.lastMonthStart);
+      setEndDate(presets.lastMonthEnd);
+    } else if (preset === "last_7") {
+      setStartDate(presets.last7DaysStart);
+      setEndDate(presets.todayYMD);
+    } else if (preset === "last_30") {
+      setStartDate(presets.last30DaysStart);
+      setEndDate(presets.todayYMD);
+    }
+  };
+
   // Filter and Search
   const filteredTransactions = useMemo(() => {
     return transactions.filter(t => {
       if (filterType !== "ALL" && t.category.type !== filterType) return false;
       if (selectedCategory !== "ALL" && t.category.id !== selectedCategory) return false;
+
+      // Filter Rentang Tanggal WIB
+      const tYMD = toJakartaYMD(t.date);
+      if (startDate && tYMD < startDate) return false;
+      if (endDate && tYMD > endDate) return false;
+
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchCategory = t.category.name.toLowerCase().includes(query);
@@ -197,13 +244,37 @@ export default function HistoryClient({
       }
       return true;
     });
-  }, [transactions, filterType, selectedCategory, searchQuery]);
+  }, [transactions, filterType, selectedCategory, searchQuery, startDate, endDate]);
 
-  // Group by Local Date
+  // Filter Totals (Sum of in and out for currently filtered set)
+  const { totalFilteredIn, totalFilteredOut } = useMemo(() => {
+    let inSum = 0;
+    let outSum = 0;
+    for (const t of filteredTransactions) {
+      if (t.category.type === "INCOME") {
+        inSum += t.amount;
+      } else {
+        outSum += t.amount;
+      }
+    }
+    return { totalFilteredIn: inSum, totalFilteredOut: outSum };
+  }, [filteredTransactions]);
+
+  // Pagination calculations
+  const totalItems = filteredTransactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * pageSize;
+    return filteredTransactions.slice(startIndex, startIndex + pageSize);
+  }, [filteredTransactions, safeCurrentPage, pageSize]);
+
+  // Group by Local Date (only current page items)
   const groupedTransactions = useMemo(() => {
     const map = new Map<string, { date: Date; items: Transaction[]; totalIn: number; totalOut: number }>();
 
-    filteredTransactions.forEach(t => {
+    paginatedTransactions.forEach(t => {
       const key = toJakartaYMD(t.date);
       const { year, month, day } = getJakartaDateParts(t.date);
       const groupDate = new Date(year, month - 1, day);
@@ -222,13 +293,38 @@ export default function HistoryClient({
     });
 
     return Array.from(map.values()).sort((a, b) => b.date.getTime() - a.date.getTime());
-  }, [filteredTransactions]);
+  }, [paginatedTransactions]);
+
+  const csvExportUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+    const qs = params.toString();
+    return qs ? `/api/export/csv?${qs}` : "/api/export/csv";
+  }, [startDate, endDate]);
+
+  const getPaginationRange = (current: number, total: number) => {
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [];
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total);
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+    return pages;
+  };
 
   const formatter = new Intl.NumberFormat('id-ID', { 
     style: 'currency', 
     currency: 'IDR', 
     minimumFractionDigits: 0 
   });
+
+  const isDateFiltered = Boolean(startDate || endDate);
 
   return (
     <div className="space-y-4">
@@ -252,7 +348,7 @@ export default function HistoryClient({
       {/* Search, Category Filter & Export Row */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
         {/* Search */}
-        <div className="relative sm:col-span-6">
+        <div className="relative sm:col-span-5">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -278,12 +374,29 @@ export default function HistoryClient({
           </select>
         </div>
 
-        {/* Export Button */}
-        <div className="sm:col-span-2">
+        {/* Date Filter Toggle & CSV Button */}
+        <div className="sm:col-span-3 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDateFilter(prev => !prev)}
+            className={`flex-1 py-2 px-2.5 border rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5 ${
+              isDateFiltered || showDateFilter
+                ? "bg-blue-50 dark:bg-blue-950/50 border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            }`}
+            title="Filter Tanggal"
+          >
+            <CalendarRange className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>Periode</span>
+            {isDateFiltered && (
+              <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+            )}
+          </button>
+
           <a
-            href="/api/export/csv"
+            href={csvExportUrl}
             download
-            className="w-full py-2 px-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5"
+            className="py-2 px-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center justify-center gap-1.5 shrink-0"
             title="Unduh Riwayat ke CSV"
           >
             <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
@@ -292,8 +405,147 @@ export default function HistoryClient({
         </div>
       </div>
 
+      {/* Collapsible Date Range Filter Panel */}
+      {showDateFilter && (
+        <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-700/60">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-xs font-bold text-gray-900 dark:text-white">Filter Rentang Tanggal</h3>
+            </div>
+            {isDateFiltered && (
+              <button
+                type="button"
+                onClick={() => { setStartDate(""); setEndDate(""); }}
+                className="text-[11px] text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 font-semibold"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Reset Tanggal
+              </button>
+            )}
+          </div>
+
+          {/* Date Pickers */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                Dari Tanggal
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
+                Sampai Tanggal
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Quick Preset Buttons */}
+          <div>
+            <span className="block text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">
+              Pilihan Cepat
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("this_month")}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                Bulan Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("last_month")}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                Bulan Lalu
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("last_7")}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                7 Hari Terakhir
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("last_30")}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700/80 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                30 Hari Terakhir
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset("all")}
+                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 dark:bg-gray-700/80 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                Semua Waktu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Filter Info Badge */}
+      {isDateFiltered && !showDateFilter && (
+        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/40 rounded-xl text-xs">
+          <div className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 font-medium">
+            <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>
+              Periode: <strong>{startDate ? formatDisplayDate(startDate) : "Awal"}</strong> s/d <strong>{endDate ? formatDisplayDate(endDate) : "Sekarang"}</strong>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setStartDate(""); setEndDate(""); }}
+            className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400 transition-colors"
+            title="Hapus filter tanggal"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Filter Summary Row */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-gray-500 dark:text-gray-400">
+        <div>
+          {totalItems > 0 ? (
+            <span>
+              Menampilkan <strong className="text-gray-800 dark:text-gray-200">{((safeCurrentPage - 1) * pageSize) + 1} - {Math.min(safeCurrentPage * pageSize, totalItems)}</strong> dari <strong className="text-gray-800 dark:text-gray-200">{totalItems}</strong> transaksi
+            </span>
+          ) : (
+            <span>Tidak ada transaksi</span>
+          )}
+        </div>
+        {totalItems > 0 && (
+          <div className="flex items-center gap-2.5 text-[11px] font-medium">
+            {totalFilteredIn > 0 && (
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                Masuk: +{formatter.format(totalFilteredIn)}
+              </span>
+            )}
+            {totalFilteredOut > 0 && (
+              <span className="text-rose-600 dark:text-rose-400 font-bold">
+                Keluar: -{formatter.format(totalFilteredOut)}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Grouped Transaction List */}
-      <div className="space-y-4 pb-8">
+      <div className="space-y-4">
         {groupedTransactions.map(group => (
           <div key={toJakartaYMD(group.date)} className="space-y-2">
             {/* Date Header with Daily Subtotal */}
@@ -389,11 +641,100 @@ export default function HistoryClient({
         ))}
 
         {filteredTransactions.length === 0 && (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-            Tidak ada transaksi yang cocok dengan filter atau pencarian.
+          <div className="text-center py-12 px-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 space-y-3">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700/60 rounded-full flex items-center justify-center mx-auto text-gray-400">
+              <Search className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Tidak ada transaksi ditemukan</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+                Tidak ada transaksi yang cocok dengan filter tanggal, kategori, atau kata kunci pencarian.
+              </p>
+            </div>
+            {(isDateFiltered || selectedCategory !== "ALL" || searchQuery || filterType !== "ALL") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterType("ALL");
+                  setSelectedCategory("ALL");
+                  setSearchQuery("");
+                  setStartDate("");
+                  setEndDate("");
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-semibold transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Semua Filter
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 pb-8 border-t border-gray-100 dark:border-gray-700/60">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <span>Baris per halaman:</span>
+            <select
+              value={pageSize}
+              onChange={e => setPageSize(Number(e.target.value))}
+              className="px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={safeCurrentPage === 1}
+              className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              title="Halaman Sebelumnya"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {getPaginationRange(safeCurrentPage, totalPages).map((p, idx) => (
+                typeof p === 'number' ? (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCurrentPage(p)}
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                      safeCurrentPage === p
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ) : (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-gray-400">
+                    {p}
+                  </span>
+                )
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={safeCurrentPage === totalPages}
+              className="p-2 rounded-xl text-xs font-semibold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              title="Halaman Berikutnya"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingTransaction && (

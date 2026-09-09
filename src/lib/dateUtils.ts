@@ -76,3 +76,45 @@ export function getWIBStartOfDayInUTC(year: number, monthZeroIndexed: number, da
 export function getWIBEndOfDayInUTC(year: number, monthZeroIndexed: number, day: number): Date {
   return new Date(Date.UTC(year, monthZeroIndexed, day, 23, 59, 59, 999) - (WIB_OFFSET_HOURS * 3600 * 1000));
 }
+
+/**
+ * Returns preset date ranges in 'YYYY-MM-DD' formatted for Asia/Jakarta.
+ */
+export function getDateRangePresets() {
+  const now = new Date();
+  const { year, month, day } = getJakartaDateParts(now);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const todayYMD = `${year}-${pad(month)}-${pad(day)}`;
+
+  // This Month
+  const thisMonthStart = `${year}-${pad(month)}-01`;
+  const lastDayThisMonth = new Date(year, month, 0).getDate();
+  const thisMonthEnd = `${year}-${pad(month)}-${pad(lastDayThisMonth)}`;
+
+  // Last Month
+  const lastMonthYear = month === 1 ? year - 1 : year;
+  const lastMonthNum = month === 1 ? 12 : month - 1;
+  const lastDayLastMonth = new Date(lastMonthYear, lastMonthNum, 0).getDate();
+  const lastMonthStart = `${lastMonthYear}-${pad(lastMonthNum)}-01`;
+  const lastMonthEnd = `${lastMonthYear}-${pad(lastMonthNum)}-${pad(lastDayLastMonth)}`;
+
+  // Last 7 days
+  const d7 = new Date(year, month - 1, day - 6);
+  const p7 = getJakartaDateParts(d7);
+  const last7DaysStart = `${p7.year}-${pad(p7.month)}-${pad(p7.day)}`;
+
+  // Last 30 days
+  const d30 = new Date(year, month - 1, day - 29);
+  const p30 = getJakartaDateParts(d30);
+  const last30DaysStart = `${p30.year}-${pad(p30.month)}-${pad(p30.day)}`;
+
+  return {
+    todayYMD,
+    thisMonthStart,
+    thisMonthEnd,
+    lastMonthStart,
+    lastMonthEnd,
+    last7DaysStart,
+    last30DaysStart,
+  };
+}

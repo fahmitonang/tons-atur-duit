@@ -21,7 +21,20 @@ export async function GET(req: Request) {
       category: { userId: session.user.id }
     };
 
-    if (month && year) {
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
+
+    if (startDateParam || endDateParam) {
+      whereClause.date = {};
+      if (startDateParam && /^\d{4}-\d{2}-\d{2}$/.test(startDateParam)) {
+        const [sy, sm, sd] = startDateParam.split("-").map(Number);
+        whereClause.date.gte = getWIBStartOfDayInUTC(sy, sm - 1, sd);
+      }
+      if (endDateParam && /^\d{4}-\d{2}-\d{2}$/.test(endDateParam)) {
+        const [ey, em, ed] = endDateParam.split("-").map(Number);
+        whereClause.date.lte = getWIBEndOfDayInUTC(ey, em - 1, ed);
+      }
+    } else if (month && year) {
       const m = parseInt(month);
       const y = parseInt(year);
       if (!isNaN(m) && !isNaN(y) && m >= 1 && m <= 12 && y >= 2000 && y <= 2100) {
