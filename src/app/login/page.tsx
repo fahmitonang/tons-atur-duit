@@ -4,8 +4,9 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import toast from "react-hot-toast";
-import { Wallet, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -34,12 +35,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8 transition-colors">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-8 transition-colors">
       <div className="max-w-md w-full space-y-6 bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700">
         {/* App Logo & Header */}
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25">
-            <Wallet className="w-7 h-7" />
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-50 dark:bg-gray-700/50 flex items-center justify-center p-2.5 border border-blue-100 dark:border-gray-700 shadow-sm">
+            <Image
+              src="/icon.png"
+              alt="Logo Atur Duit"
+              width={48}
+              height={48}
+              priority
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
@@ -118,6 +126,12 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+
+      {/* App Version Footer */}
+      <footer className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500 space-y-0.5">
+        <p className="font-semibold tracking-wide">Atur Duit v1.1.0</p>
+        <p className="text-[11px] text-gray-400/80 dark:text-gray-600">Financial Intelligence Edition</p>
+      </footer>
     </div>
   );
 }
