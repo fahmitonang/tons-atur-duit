@@ -54,7 +54,7 @@ export default function LoginPage() {
               Atur Duit
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Masuk untuk mengelola keuangan dan budget bulanan Anda
+              Kelola keuangan Anda dengan mudah dan efisien
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function LoginPage() {
       {/* App Version Footer */}
       <footer className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500 space-y-0.5">
         <p className="font-semibold tracking-wide">Atur Duit v1.1.0</p>
-        <p className="text-[11px] text-gray-400/80 dark:text-gray-600">Financial Intelligence Edition</p>
+        <p className="text-[11px] text-gray-400/80 dark:text-gray-600">App by Fahmi Tonang</p>
       </footer>
     </div>
   );

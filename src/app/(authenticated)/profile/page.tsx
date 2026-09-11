@@ -1,134 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { 
   LogOut, 
   Key, 
-  X, 
   Mail, 
   ShieldCheck, 
-  AlertTriangle, 
   Wallet, 
   Target, 
-  Calendar,
-  Sparkles
+  Calendar
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { updatePaydayCutoff, getUserSettings } from "./actions";
-
-// Change Password Modal
-function ChangePasswordModal({ onClose }: { onClose: () => void }) {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error("Password baru tidak cocok");
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error("Password baru minimal 8 karakter");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Gagal mengubah password");
-      }
-
-      toast.success("Password berhasil diubah!");
-      onClose();
-    } catch (err: any) {
-      toast.error(err.message || "Terjadi kesalahan");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
-        <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-base font-bold text-gray-900 dark:text-white">Ubah Kata Sandi</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Password Lama
-            </label>
-            <input 
-              type="password" 
-              required
-              value={currentPassword}
-              onChange={e => setCurrentPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Password Baru
-            </label>
-            <input 
-              type="password" 
-              required
-              minLength={8}
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Konfirmasi Password Baru
-            </label>
-            <input 
-              type="password" 
-              required
-              minLength={8}
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
-            />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Menyimpan..." : "Simpan Password"}
-            </button>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
-            >
-              Batal
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+import ChangePasswordModal from "@/components/ChangePasswordModal";
+import LogoutConfirmModal from "@/components/LogoutConfirmModal";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
@@ -299,40 +187,7 @@ export default function ProfilePage() {
       {showChangePassword && <ChangePasswordModal onClose={() => setShowChangePassword(false)} />}
 
       {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 text-center">
-            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">Keluar dari Akun?</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Anda perlu memasukkan username dan password kembali untuk masuk ke aplikasi.
-              </p>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOut({ redirect: false });
-                  window.location.href = "/login";
-                }}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm transition-colors"
-              >
-                Ya, Keluar
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showLogoutConfirm && <LogoutConfirmModal onClose={() => setShowLogoutConfirm(false)} />}
     </div>
   );
 }
