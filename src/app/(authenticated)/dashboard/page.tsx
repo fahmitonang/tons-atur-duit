@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import ExpenseDonutChart from "@/components/ExpenseDonutChart";
 import DailyTrendChart from "@/components/DailyTrendChart";
+import AiInsightCard from "@/components/AiInsightCard";
 import { getBillingPeriod } from "@/lib/period";
 import { getPaymentMethodLabel } from "@/lib/paymentMethod";
 import { toJakartaYMD, formatDisplayDate } from "@/lib/dateUtils";
@@ -259,6 +260,9 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* AI Financial Advisor Insight Widget */}
+      <AiInsightCard />
 
       {/* Dompet / Multi-Wallet Summary Widget */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">

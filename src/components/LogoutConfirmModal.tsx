@@ -63,3 +63,4 @@ export default function LogoutConfirmModal({ onClose }: LogoutConfirmModalProps)
     </div>
   );
 }
+

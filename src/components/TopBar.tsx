@@ -11,7 +11,8 @@ import {
   User, 
   Key, 
   LogOut, 
-  ChevronDown 
+  ChevronDown,
+  Sparkles
 } from "lucide-react";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
 import LogoutConfirmModal from "@/components/LogoutConfirmModal";
@@ -34,6 +35,7 @@ function getPageTitle(pathname: string): string {
   if (pathname === "/profile" || pathname.startsWith("/profile/")) return "Profil Saya";
   if (pathname === "/wallets" || pathname.startsWith("/wallets/")) return "Kelola Dompet";
   if (pathname === "/savings" || pathname.startsWith("/savings/")) return "Celengan Impian";
+  if (pathname === "/ai-advisor" || pathname.startsWith("/ai-advisor/")) return "Asisten AI";
   return "Atur Duit";
 }
 
@@ -122,8 +124,22 @@ export default function TopBar({ user }: TopBarProps) {
             </div>
           </Link>
 
-          {/* Right Actions: Compact Dark Mode Toggle & Profile Dropdown */}
+          {/* Right Actions: Compact Dark Mode Toggle, AI Shortcut, & Profile Dropdown */}
           <div className="flex items-center gap-2">
+            {/* AI Advisor Shortcut Button */}
+            <Link
+              href="/ai-advisor"
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-95 border cursor-pointer ${
+                pathname.startsWith("/ai-advisor")
+                  ? "bg-indigo-600 text-white border-indigo-700 shadow-sm shadow-indigo-500/30"
+                  : "bg-indigo-50/90 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border-indigo-200/70 dark:border-indigo-800/70"
+              }`}
+              title="Asisten Keuangan AI"
+              aria-label="Asisten Keuangan AI"
+            >
+              <Sparkles className="w-4 h-4" />
+            </Link>
+
             {/* Dark / Light Toggle Button */}
             <button
               type="button"
@@ -199,6 +215,16 @@ export default function TopBar({ user }: TopBarProps) {
                   >
                     <User className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                     <span>Profil saya</span>
+                  </Link>
+
+                  {/* Asisten Keuangan AI */}
+                  <Link
+                    href="/ai-advisor"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                  >
+                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <span>Asisten Keuangan AI</span>
                   </Link>
 
                   {/* 2. Ganti Password */}
