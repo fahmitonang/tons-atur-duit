@@ -2,7 +2,7 @@
 
 import { AlertTriangle, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type LogoutConfirmModalProps = {
   onClose: () => void;
@@ -10,6 +10,14 @@ type LogoutConfirmModalProps = {
 
 export default function LogoutConfirmModal({ onClose }: LogoutConfirmModalProps) {
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -23,13 +31,19 @@ export default function LogoutConfirmModal({ onClose }: LogoutConfirmModalProps)
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs sm:px-4 animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="logout-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 text-center animate-in zoom-in-95 duration-150">
-        <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
+      <div className="w-full max-w-md sm:max-w-sm bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-7 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 text-center animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+        {/* Mobile Bottom Sheet Handle */}
+        <div className="w-10 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto -mt-1 mb-1 sm:hidden" />
+
+        <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto">
           <AlertTriangle className="w-6 h-6" />
         </div>
         <div>
@@ -63,4 +77,3 @@ export default function LogoutConfirmModal({ onClose }: LogoutConfirmModalProps)
     </div>
   );
 }
-

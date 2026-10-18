@@ -34,8 +34,7 @@ export default async function HistoryPage() {
   });
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Riwayat Transaksi</h1>
+    <div className="p-4 pt-3.5 pb-6">
       <HistoryClient 
         initialTransactions={transactions} 
         categories={categories} 

@@ -63,12 +63,7 @@ export default function ProfilePage() {
     .toUpperCase();
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profil Pengguna</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Pengaturan akun & preferensi aplikasi</p>
-      </div>
-      
+    <div className="p-4 pt-3.5 pb-6 space-y-4">
       {/* User Info Card with Avatar */}
       <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
         <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center text-xl font-extrabold shadow-md shadow-blue-500/20 shrink-0">

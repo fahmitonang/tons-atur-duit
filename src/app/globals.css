@@ -4,6 +4,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: transparent;
 }
 
 @theme inline {
@@ -18,10 +20,61 @@
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --scrollbar-thumb: #334155;
+  --scrollbar-track: transparent;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Legacy fallback for WebKit/Blink browsers that do not support standard scrollbar-color */
+@supports not (scrollbar-color: auto) {
+  body::-webkit-scrollbar,
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  body::-webkit-scrollbar-thumb,
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  body::-webkit-scrollbar-track,
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+}
+
+/* Hide scrollbar for horizontal chip scrollers while preserving scrollability */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@supports not (scrollbar-width: none) {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Target specific heading elements for balanced wrapping */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+/* Apply pretty line-breaking logic for body copy and lists to prevent orphaned words */
+p, blockquote, li {
+  text-wrap: pretty;
+}
+
+/* Ensure financial numbers align vertically across rows and animations */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

@@ -150,20 +150,15 @@ export default function AiAdvisorPage() {
   ];
 
   return (
-    <div className="p-4 space-y-4 pb-20">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <h1 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-              Asisten Keuangan AI
-            </h1>
+    <div className="p-4 pt-3.5 space-y-4 pb-20">
+      {/* Contextual Sub-Header Bar */}
+      <div className="flex items-center justify-between gap-3 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl px-3.5 py-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-sm shadow-indigo-500/20 shrink-0">
+            <Sparkles className="w-4 h-4" />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Penasihat finansial cerdas didukung Google Gemini 3.6
+          <p className="text-xs font-medium text-indigo-950 dark:text-indigo-200 truncate">
+            Didukung <strong className="font-bold">Google Gemini</strong>
           </p>
         </div>
 
@@ -171,7 +166,7 @@ export default function AiAdvisorPage() {
           type="button"
           onClick={handleRefreshAnalysis}
           disabled={refreshing}
-          className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer shrink-0"
           title="Audit Ulang Data Keuangan"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -537,3 +532,4 @@ export default function AiAdvisorPage() {
     </div>
   );
 }
+

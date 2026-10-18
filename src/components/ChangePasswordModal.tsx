@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Eye, EyeOff, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -14,6 +14,14 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,15 +58,21 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs sm:px-4 animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
       aria-labelledby="change-password-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 animate-in zoom-in-95 duration-150">
-        <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+      <div className="w-full max-w-md sm:max-w-sm bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-7 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+        {/* Mobile Bottom Sheet Handle */}
+        <div className="w-10 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto -mt-1 mb-2 sm:hidden" />
+
+        <div className="flex justify-between items-center pb-2.5 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <KeyRound className="w-4 h-4" />
             </div>
             <h3 id="change-password-title" className="text-base font-bold text-gray-900 dark:text-white">
@@ -68,7 +82,7 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
           <button 
             type="button"
             onClick={onClose} 
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
             aria-label="Tutup modal"
           >
             <X className="w-5 h-5" />
@@ -80,50 +94,47 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Password Saat Ini
             </label>
-            <div className="relative">
-              <input 
-                type={showPasswords ? "text" : "password"} 
-                required
-                placeholder="Masukkan password saat ini"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
-              />
-            </div>
+            <input 
+              type={showPasswords ? "text" : "password"} 
+              required
+              autoComplete="current-password"
+              placeholder="Masukkan password saat ini"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
+            />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Password Baru
             </label>
-            <div className="relative">
-              <input 
-                type={showPasswords ? "text" : "password"} 
-                required
-                minLength={8}
-                placeholder="Minimal 8 karakter"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
-              />
-            </div>
+            <input 
+              type={showPasswords ? "text" : "password"} 
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="Minimal 8 karakter"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
+            />
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
               Konfirmasi Password Baru
             </label>
-            <div className="relative">
-              <input 
-                type={showPasswords ? "text" : "password"} 
-                required
-                minLength={8}
-                placeholder="Ketik ulang password baru"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
-              />
-            </div>
+            <input 
+              type={showPasswords ? "text" : "password"} 
+              required
+              minLength={8}
+              autoComplete="new-password"
+              placeholder="Ketik ulang password baru"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors" 
+            />
           </div>
 
           {/* Toggle Show/Hide Passwords */}
@@ -167,4 +178,3 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
     </div>
   );
 }
-

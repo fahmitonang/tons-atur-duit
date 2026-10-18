@@ -86,14 +86,7 @@ export default async function TransactionPage() {
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Catat Transaksi</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Pencatatan pemasukan, pengeluaran & monitoring budget langsung
-        </p>
-      </div>
-
+    <div className="p-4">
       <TransactionForm 
         categories={categories} 
         accounts={accounts}

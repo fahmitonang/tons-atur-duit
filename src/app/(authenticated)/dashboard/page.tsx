@@ -22,8 +22,8 @@ import {
   Percent,
   Sparkles
 } from "lucide-react";
-import ExpenseDonutChart from "@/components/ExpenseDonutChart";
-import DailyTrendChart from "@/components/DailyTrendChart";
+import DashboardHeroCard from "@/components/DashboardHeroCard";
+import DashboardAnalyticsTabs from "@/components/DashboardAnalyticsTabs";
 import AiInsightCard from "@/components/AiInsightCard";
 import { getBillingPeriod } from "@/lib/period";
 import { getPaymentMethodLabel } from "@/lib/paymentMethod";
@@ -243,16 +243,20 @@ export default async function DashboardPage() {
   const recentTransactions = transactions.slice(0, 5);
 
   return (
-    <div className="p-4 space-y-5">
-      {/* Header with Custom Billing Period Label */}
+    <div className="p-4 space-y-4">
+      {/* Compact Contextual Sub-Header (Eliminates duplicate H1 title) */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Laporan</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Ringkasan keuangan & kontrol budget</p>
+          <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+            Halo, {session.user.name?.split(" ")[0] || session.user.username || "Pengguna"} 👋
+          </p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            Ringkasan keuangan & kontrol budget aktif
+          </p>
         </div>
         <div className="text-right">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 inline-flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-blue-600" />
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 inline-flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             {periodLabel}
           </span>
           {cutoffDay > 1 && (
@@ -261,99 +265,29 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* AI Financial Advisor Insight Widget */}
+      {/* 1. Unified Financial Hero Card (Net Cashflow, Income, Expense, Privacy Toggle & Multi-Wallet Strip) */}
+      <DashboardHeroCard
+        totalWalletBalance={totalWalletBalance}
+        accounts={accounts}
+        netBalance={netBalance}
+        totalIncome={totalIncome}
+        totalExpense={totalExpense}
+        incomeCount={incomeTransactions.length}
+        expenseCount={expenseTransactions.length}
+        prevTotalExpense={prevTotalExpense}
+        momDiff={momDiff}
+        momPct={momPct}
+      />
+
+      {/* 2. AI Financial Advisor Insight Widget */}
       <AiInsightCard />
 
-      {/* Dompet / Multi-Wallet Summary Widget */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Total Saldo Dompet</p>
-              <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">
-                {formatter.format(totalWalletBalance)}
-              </p>
-            </div>
-          </div>
-          <Link 
-            href="/wallets"
-            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-          >
-            Kelola ({accounts.length})
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        {/* Quick wallet chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1 text-xs">
-          {accounts.map(acc => (
-            <div key={acc.id} className="px-3 py-1.5 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600/50 flex items-center gap-1.5 shrink-0">
-              <span className="font-semibold text-gray-700 dark:text-gray-300">{acc.name}:</span>
-              <span className="font-bold text-blue-600 dark:text-blue-400">{formatter.format(acc.balance)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Hero Card: Sisa Saldo Periode Ini with Month-over-Month Comparison */}
-      <div className={`p-5 rounded-2xl border shadow-sm transition-colors ${
-        netBalance >= 0 
-          ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-blue-500' 
-          : 'bg-gradient-to-br from-rose-600 to-red-700 text-white border-rose-500'
-      }`}>
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-xs font-medium text-blue-100 flex items-center gap-1.5 mb-1">
-              <Wallet className="w-4 h-4" />
-              Arus Kas Bersih Periode Ini
-            </p>
-            <h2 className="text-3xl font-extrabold tracking-tight">
-              {formatter.format(netBalance)}
-            </h2>
-            <p className="text-xs text-blue-100/90 mt-1">
-              Pemasukan {formatter.format(totalIncome)} - Pengeluaran {formatter.format(totalExpense)}
-            </p>
-          </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-            netBalance > 0 
-              ? 'bg-emerald-400/20 text-emerald-100 border border-emerald-300/30' 
-              : netBalance < 0 
-              ? 'bg-red-400/20 text-red-100 border border-red-300/30' 
-              : 'bg-white/20 text-white'
-          }`}>
-            {netBalance > 0 ? 'Surplus' : netBalance < 0 ? 'Defisit' : 'Seimbang'}
-          </span>
-        </div>
-
-        {/* Month-over-Month Comparison Indicator */}
-        {prevTotalExpense > 0 && momPct !== null && (
-          <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-blue-100">
-            <span className="flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5" />
-              Dibandingkan periode lalu:
-            </span>
-            <span className={`font-bold px-2 py-0.5 rounded-lg ${
-              momDiff < 0 
-                ? 'bg-emerald-400/20 text-emerald-200' 
-                : momDiff > 0 
-                ? 'bg-rose-400/25 text-rose-100' 
-                : 'bg-white/20'
-            }`}>
-              {momDiff < 0 ? `Hemat ${momPct}% (${formatter.format(Math.abs(momDiff))})` : momDiff > 0 ? `Naik ${momPct}% (${formatter.format(momDiff)})` : 'Sama persis'}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Daily Budget Pacing Card */}
+      {/* 3. Daily Budget Pacing Card (Burn Rate) */}
       {totalBudgetLimit > 0 && (
         <div className={`p-4 rounded-2xl border transition-all ${
           isOverallOverbudget
             ? "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200"
-            : "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-950 dark:text-indigo-200"
+            : "bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200/80 dark:border-indigo-900/50 text-indigo-950 dark:text-indigo-200"
         }`}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-bold flex items-center gap-1.5">
@@ -368,13 +302,13 @@ export default async function DashboardPage() {
           <div className="flex justify-between items-baseline">
             <div>
               <p className="text-xs opacity-80">Jatah aman belanja harian:</p>
-              <h3 className="text-xl font-black mt-0.5">
+              <h3 className="text-xl font-black mt-0.5 tabular-nums">
                 {isOverallOverbudget ? "Rp 0 / hari (Budget Habis)" : `${formatter.format(recommendedDaily)} / hari`}
               </h3>
             </div>
             <div className="text-right">
               <p className="text-[11px] opacity-80">Sisa budget total:</p>
-              <p className="text-sm font-bold">
+              <p className="text-sm font-bold tabular-nums">
                 {formatter.format(remainingOverallBudget)}
               </p>
             </div>
@@ -382,8 +316,15 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Target Tabungan / Celengan Impian Widget */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
+      {/* 4. Tabbed Analytics Chart (Donut Composition & Daily Trend Combined) */}
+      <DashboardAnalyticsTabs
+        expenseBreakdown={expenseBreakdown}
+        dailyTrendData={dailyTrendData}
+        periodLabel={periodLabel}
+      />
+
+      {/* 5. Target Tabungan / Celengan Impian Widget */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/80 shadow-xs space-y-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -391,7 +332,7 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Celengan & Tabungan Impian</p>
-              <p className="text-base font-bold text-gray-900 dark:text-white leading-tight">
+              <p className="text-base font-bold text-gray-900 dark:text-white leading-tight tabular-nums">
                 {formatter.format(totalSavedAllGoals)}
               </p>
             </div>
@@ -413,7 +354,7 @@ export default async function DashboardPage() {
                 <div key={g.id} className="text-xs space-y-1">
                   <div className="flex justify-between font-semibold text-gray-800 dark:text-gray-200">
                     <span>{g.name}</span>
-                    <span>{formatter.format(g.currentAmount)} / {formatter.format(g.targetAmount)} ({pct}%)</span>
+                    <span className="tabular-nums">{formatter.format(g.currentAmount)} / {formatter.format(g.targetAmount)} ({pct}%)</span>
                   </div>
                   <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                     <div 
@@ -433,63 +374,6 @@ export default async function DashboardPage() {
             </Link>
           </div>
         )}
-      </div>
-
-      {/* Income & Expense Summary Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Income Card */}
-        <div className="bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Pemasukan</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <p className="text-lg font-bold text-emerald-800 dark:text-emerald-300 leading-tight">
-            {formatter.format(totalIncome)}
-          </p>
-          <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/70 mt-1">
-            {incomeTransactions.length} transaksi
-          </p>
-        </div>
-
-        {/* Expense Card */}
-        <div className="bg-rose-50 dark:bg-rose-950/30 p-4 rounded-xl border border-rose-100 dark:border-rose-900/40">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-semibold text-rose-700 dark:text-rose-400">Pengeluaran</span>
-            <TrendingDown className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-          </div>
-          <p className="text-lg font-bold text-rose-800 dark:text-rose-300 leading-tight">
-            {formatter.format(totalExpense)}
-          </p>
-          <p className="text-[11px] text-rose-600/80 dark:text-rose-400/70 mt-1">
-            {expenseTransactions.length} transaksi
-          </p>
-        </div>
-      </div>
-
-      {/* Daily Spending Trend Chart Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-2">
-        <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            Tren Pengeluaran Harian
-          </h2>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{periodLabel}</span>
-        </div>
-
-        <DailyTrendChart dailyData={dailyTrendData} periodLabel={periodLabel} />
-      </div>
-
-      {/* Visualisasi Donut Chart: Komposisi Pengeluaran */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-3">
-        <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-            <PieIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            Komposisi Pengeluaran
-          </h2>
-          <span className="text-xs text-gray-500 dark:text-gray-400">Periode aktif</span>
-        </div>
-
-        <ExpenseDonutChart items={expenseBreakdown} />
       </div>
 
       {/* Monthly Budget Section */}

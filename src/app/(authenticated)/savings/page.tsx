@@ -28,14 +28,7 @@ export default async function SavingsPage() {
   });
 
   return (
-    <div className="p-4 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Celengan Impian</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Kelola target tabungan, dana darurat, dan impian masa depan
-        </p>
-      </div>
-
+    <div className="p-4 pt-3.5 pb-6 space-y-4">
       <SavingsClient initialGoals={goals} accounts={accounts} />
     </div>
   );

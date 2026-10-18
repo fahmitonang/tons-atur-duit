@@ -529,7 +529,7 @@ export default function HistoryClient({
           )}
         </div>
         {totalItems > 0 && (
-          <div className="flex items-center gap-2.5 text-[11px] font-medium">
+          <div className="flex items-center gap-2.5 text-[11px] font-medium tabular-nums">
             {totalFilteredIn > 0 && (
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                 Masuk: +{formatter.format(totalFilteredIn)}
@@ -553,7 +553,7 @@ export default function HistoryClient({
               <span className="font-bold text-gray-800 dark:text-gray-200">
                 {formatDateHeader(group.date)}
               </span>
-              <div className="flex gap-2 text-[11px] font-medium">
+              <div className="flex gap-2 text-[11px] font-medium tabular-nums">
                 {group.totalIn > 0 && (
                   <span className="text-emerald-600 dark:text-emerald-400">
                     +{formatter.format(group.totalIn)}
@@ -608,7 +608,7 @@ export default function HistoryClient({
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    <p className={`text-sm font-bold text-right ${
+                    <p className={`text-sm font-bold text-right tabular-nums ${
                       t.category.type === "INCOME" 
                         ? "text-emerald-600 dark:text-emerald-400" 
                         : "text-rose-600 dark:text-rose-400"
@@ -620,14 +620,14 @@ export default function HistoryClient({
                     <div className="flex items-center gap-1 border-l border-gray-100 dark:border-gray-700 pl-2">
                       <button
                         onClick={() => handleOpenEdit(t)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                         title="Edit Transaksi"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setDeletingTransaction(t)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                         title="Hapus Transaksi"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -736,15 +736,24 @@ export default function HistoryClient({
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Modal (Bottom Sheet on Mobile) */}
       {editingTransaction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+        <div
+          onClick={() => setEditingTransaction(null)}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            {/* Mobile Drag Handle */}
+            <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-1 sm:hidden" />
+
+            <div className="flex justify-between items-center pb-2.5 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Edit Transaksi</h3>
               <button 
                 onClick={() => setEditingTransaction(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -835,7 +844,7 @@ export default function HistoryClient({
                   required
                   value={editForm.amount}
                   onChange={e => setEditForm({...editForm, amount: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold tabular-nums focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -855,18 +864,18 @@ export default function HistoryClient({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2.5 pt-2">
                 <button 
                   type="submit" 
                   disabled={savingEdit}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-colors"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {savingEdit ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
                 <button 
                   type="button" 
                   onClick={() => setEditingTransaction(null)}
-                  className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
                 >
                   Batal
                 </button>
@@ -876,11 +885,20 @@ export default function HistoryClient({
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (Bottom Sheet on Mobile) */}
       {deletingTransaction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 text-center">
-            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
+        <div
+          onClick={() => setDeletingTransaction(null)}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 text-center"
+          >
+            {/* Mobile Drag Handle */}
+            <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-1 sm:hidden" />
+
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
@@ -889,19 +907,19 @@ export default function HistoryClient({
                 Data transaksi ini akan dihapus permanen dan saldo dompet akan dikembalikan otomatis.
               </p>
             </div>
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-colors"
+                className="flex-1 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-semibold py-2.5 rounded-xl text-sm shadow-sm disabled:opacity-50 transition-all cursor-pointer"
               >
                 {isDeleting ? "Menghapus..." : "Ya, Hapus"}
               </button>
               <button
                 type="button"
                 onClick={() => setDeletingTransaction(null)}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
               >
                 Batal
               </button>
