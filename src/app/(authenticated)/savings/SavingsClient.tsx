@@ -385,8 +385,8 @@ export default function SavingsClient({
 
       {/* Modal: Tambah Celengan Baru */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Tambah Celengan Impian</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -477,8 +477,8 @@ export default function SavingsClient({
 
       {/* Modal: Setor ke Celengan */}
       {depositGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <ArrowDownRight className="w-4 h-4 text-emerald-600" />
@@ -557,8 +557,8 @@ export default function SavingsClient({
 
       {/* Modal: Tarik dari Celengan */}
       {withdrawGoal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <ArrowUpRight className="w-4 h-4 text-rose-600" />

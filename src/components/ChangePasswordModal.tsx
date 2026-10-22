@@ -58,7 +58,7 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs sm:px-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs sm:px-4 animate-in fade-in duration-200 overflow-hidden overscroll-contain"
       role="dialog"
       aria-modal="true"
       aria-labelledby="change-password-title"
@@ -66,7 +66,7 @@ export default function ChangePasswordModal({ onClose }: ChangePasswordModalProp
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md sm:max-w-sm bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-7 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      <div className="w-full max-w-md sm:max-w-sm bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Mobile Bottom Sheet Handle */}
         <div className="w-10 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto -mt-1 mb-2 sm:hidden" />
 

@@ -387,8 +387,8 @@ export default function WalletsClient({
 
       {/* Modal: Tambah Dompet */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Tambah Dompet Baru</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
@@ -463,8 +463,8 @@ export default function WalletsClient({
 
       {/* Modal: Transfer Antar Dompet */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <ArrowRightLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -581,8 +581,8 @@ export default function WalletsClient({
 
       {/* Modal: Edit Dompet & Saldo */}
       {editingAccount && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
-          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs px-4 overflow-hidden overscroll-contain">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-2xl border border-gray-100 dark:border-gray-700 space-y-4 max-h-[85dvh] overflow-y-auto overscroll-contain">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
               <h3 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
                 <Edit3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />

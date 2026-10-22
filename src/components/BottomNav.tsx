@@ -22,7 +22,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 z-50 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-800 transition-colors pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.05)]">
+    <nav className="fixed bottom-0 left-0 z-40 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-800 transition-colors pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.05)]">
       <div className="grid h-16 max-w-lg grid-cols-5 mx-auto font-medium px-1.5">
         {navItems.map((item) => {
           const Icon = item.icon;

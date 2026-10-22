@@ -11,7 +11,7 @@ export default async function AuthenticatedLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user?.id || (session as any)?.expired) {
     redirect("/login");
   }
 

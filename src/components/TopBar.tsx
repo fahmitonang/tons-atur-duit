@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -41,6 +42,7 @@ function getPageTitle(pathname: string): string {
 
 export default function TopBar({ user }: TopBarProps) {
   const pathname = usePathname();
+  const { data: clientSession, status, update } = useSession();
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,6 +53,31 @@ export default function TopBar({ user }: TopBarProps) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-kick jika sesi telah kedaluwarsa saat tab/aplikasi dibuka kembali di HP
+  useEffect(() => {
+    if (
+      status === "unauthenticated" ||
+      (status === "authenticated" &&
+        ((clientSession as any)?.expired || !clientSession?.user?.id))
+    ) {
+      signOut({ redirect: false }).finally(() => {
+        window.location.href = "/login";
+      });
+    }
+  }, [status, clientSession]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        update();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [update]);
 
   // Close dropdown on route change
   useEffect(() => {

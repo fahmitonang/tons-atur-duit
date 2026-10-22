@@ -3,6 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "./prisma";
 import bcrypt from "bcryptjs";
 
+// Batas waktu sesi:
+// - IDLE_TIMEOUT_MS: 6 jam tanpa aktivitas -> sesi berakhir
+// - ABSOLUTE_TIMEOUT_MS: Maksimal 24 jam sejak login awal -> wajib login ulang (mencegah sesi abadi berminggu-minggu)
+export const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60; // 24 jam
+export const SESSION_IDLE_TIMEOUT_MS = 6 * 60 * 60 * 1000; // 6 jam
+export const SESSION_ABSOLUTE_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 jam
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -49,16 +56,52 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+    updateAge: 15 * 60, // Perbarui aktivitas token tiap 15 menit
+  },
+  jwt: {
+    maxAge: SESSION_MAX_AGE_SECONDS,
   },
   callbacks: {
     async jwt({ token, user }) {
+      const now = Date.now();
+
+      // Saat pertama kali login
       if (user) {
         token.id = user.id;
         token.username = (user as any).username;
+        token.loginAt = now;
+        token.lastActivity = now;
+        token.expired = false;
+        return token;
       }
+
+      const loginAt = Number(token.loginAt || 0);
+      const lastActivity = Number(token.lastActivity || 0);
+
+      // Invalidate token lama (yang belum memiliki loginAt) atau yang sudah melewati batas idle / batas absolut
+      if (
+        !loginAt ||
+        !lastActivity ||
+        now - loginAt > SESSION_ABSOLUTE_TIMEOUT_MS ||
+        now - lastActivity > SESSION_IDLE_TIMEOUT_MS
+      ) {
+        return {
+          ...token,
+          id: "",
+          expired: true,
+        };
+      }
+
+      token.lastActivity = now;
       return token;
     },
     async session({ session, token }) {
+      if (token.expired || !token.id) {
+        session.user = { id: "", name: null, email: null, image: null };
+        (session as any).expired = true;
+        return session;
+      }
       if (session.user) {
         session.user.id = token.id as string;
         session.user.username = token.username as string;

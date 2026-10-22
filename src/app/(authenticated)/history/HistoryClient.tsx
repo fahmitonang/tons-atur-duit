@@ -740,18 +740,19 @@ export default function HistoryClient({
       {editingTransaction && (
         <div
           onClick={() => setEditingTransaction(null)}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 overflow-hidden overscroll-contain"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 flex flex-col max-h-[85dvh] sm:max-h-[90vh] overflow-hidden"
           >
             {/* Mobile Drag Handle */}
-            <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-1 sm:hidden" />
+            <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-2 shrink-0 sm:hidden" />
 
-            <div className="flex justify-between items-center pb-2.5 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex justify-between items-center pb-2.5 border-b border-gray-100 dark:border-gray-700 shrink-0">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">Edit Transaksi</h3>
               <button 
+                type="button"
                 onClick={() => setEditingTransaction(null)}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               >
@@ -759,112 +760,114 @@ export default function HistoryClient({
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-3.5">
-              {/* Date */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                  Tanggal
-                </label>
-                <input 
-                  type="date"
-                  required
-                  value={editForm.date}
-                  onChange={e => setEditForm({...editForm, date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Wallet / Account */}
-              {accounts.length > 0 && (
+            <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 pt-3">
+              <div className="space-y-3 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 pb-2">
+                {/* Date */}
                 <div>
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    <Wallet className="w-3.5 h-3.5 text-gray-400" />
-                    Dompet / Sumber Dana
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    Tanggal
+                  </label>
+                  <input 
+                    type="date"
+                    required
+                    value={editForm.date}
+                    onChange={e => setEditForm({...editForm, date: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Wallet / Account */}
+                {accounts.length > 0 && (
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      <Wallet className="w-3.5 h-3.5 text-gray-400" />
+                      Dompet / Sumber Dana
+                    </label>
+                    <select
+                      value={editForm.accountId}
+                      onChange={e => setEditForm({...editForm, accountId: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                      {accounts.map(a => (
+                        <option key={a.id} value={a.id}>{a.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Payment Method */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+                    Metode Pembayaran
                   </label>
                   <select
-                    value={editForm.accountId}
-                    onChange={e => setEditForm({...editForm, accountId: e.target.value})}
+                    value={editForm.paymentMethod}
+                    onChange={e => setEditForm({...editForm, paymentMethod: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
-                    {accounts.map(a => (
-                      <option key={a.id} value={a.id}>{a.name}</option>
+                    {PAYMENT_METHODS.map(m => (
+                      <option key={m.id} value={m.id}>{m.label}</option>
                     ))}
                   </select>
                 </div>
-              )}
 
-              {/* Payment Method */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <CreditCard className="w-3.5 h-3.5 text-gray-400" />
-                  Metode Pembayaran
-                </label>
-                <select
-                  value={editForm.paymentMethod}
-                  onChange={e => setEditForm({...editForm, paymentMethod: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  {PAYMENT_METHODS.map(m => (
-                    <option key={m.id} value={m.id}>{m.label}</option>
-                  ))}
-                </select>
+                {/* Category */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    <Tag className="w-3.5 h-3.5 text-gray-400" />
+                    Kategori
+                  </label>
+                  <select
+                    required
+                    value={editForm.categoryId}
+                    onChange={e => setEditForm({...editForm, categoryId: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.type === "INCOME" ? "Pemasukan" : "Pengeluaran"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    <Banknote className="w-3.5 h-3.5 text-gray-400" />
+                    Nominal (Rp)
+                  </label>
+                  <input 
+                    type="number" 
+                    min="1"
+                    step="1"
+                    required
+                    value={editForm.amount}
+                    onChange={e => setEditForm({...editForm, amount: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold tabular-nums focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    <FileText className="w-3.5 h-3.5 text-gray-400" />
+                    Catatan / Keterangan
+                  </label>
+                  <input 
+                    type="text" 
+                    value={editForm.description}
+                    onChange={e => setEditForm({...editForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Keterangan transaksi"
+                  />
+                </div>
               </div>
 
-              {/* Category */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <Tag className="w-3.5 h-3.5 text-gray-400" />
-                  Kategori
-                </label>
-                <select
-                  required
-                  value={editForm.categoryId}
-                  onChange={e => setEditForm({...editForm, categoryId: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.type === "INCOME" ? "Pemasukan" : "Pengeluaran"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Amount */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <Banknote className="w-3.5 h-3.5 text-gray-400" />
-                  Nominal (Rp)
-                </label>
-                <input 
-                  type="number" 
-                  min="1"
-                  step="1"
-                  required
-                  value={editForm.amount}
-                  onChange={e => setEditForm({...editForm, amount: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold tabular-nums focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  <FileText className="w-3.5 h-3.5 text-gray-400" />
-                  Catatan / Keterangan
-                </label>
-                <input 
-                  type="text" 
-                  value={editForm.description}
-                  onChange={e => setEditForm({...editForm, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Keterangan transaksi"
-                />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2.5 pt-2">
+              {/* Sticky Action Buttons Footer */}
+              <div className="flex gap-2.5 pt-3 mt-1 border-t border-gray-100 dark:border-gray-700 shrink-0 bg-white dark:bg-gray-800">
                 <button 
                   type="submit" 
                   disabled={savingEdit}
@@ -889,11 +892,11 @@ export default function HistoryClient({
       {deletingTransaction && (
         <div
           onClick={() => setDeletingTransaction(null)}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 overflow-hidden overscroll-contain"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-8 sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 text-center"
+            className="w-full max-w-md bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-5 shadow-2xl border-t sm:border border-gray-100 dark:border-gray-700 space-y-4 text-center"
           >
             {/* Mobile Drag Handle */}
             <div className="w-10 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-1 sm:hidden" />
