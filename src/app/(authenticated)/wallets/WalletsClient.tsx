@@ -532,17 +532,19 @@ export default function WalletsClient({
                 )}
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   Tanggal
                 </label>
-                <input 
-                  type="date" 
-                  required
-                  value={transferDate}
-                  onChange={e => setTransferDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                <div className="w-full min-w-0 overflow-hidden px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
+                  <input 
+                    type="date" 
+                    required
+                    value={transferDate}
+                    onChange={e => setTransferDate(e.target.value)}
+                    className="w-full max-w-full min-w-0 p-0 border-0 bg-transparent text-gray-900 dark:text-white text-sm focus:outline-none block appearance-none"
+                  />
+                </div>
               </div>
 
               <div>

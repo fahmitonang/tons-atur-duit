@@ -287,18 +287,20 @@ export default function TransactionForm({
             </div>
 
             {/* Tanggal Input */}
-            <div>
+            <div className="min-w-0">
               <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                 <Calendar className="w-3.5 h-3.5 text-gray-400" />
                 Tanggal Transaksi
               </label>
-              <input 
-                type="date"
-                required
-                className="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-              />
+              <div className="w-full min-w-0 overflow-hidden px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-blue-500 transition-colors">
+                <input 
+                  type="date"
+                  required
+                  className="w-full max-w-full min-w-0 p-0 border-0 bg-transparent text-gray-900 dark:text-white text-sm font-medium focus:outline-none block appearance-none"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 

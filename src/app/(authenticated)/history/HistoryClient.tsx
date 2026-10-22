@@ -427,27 +427,31 @@ export default function HistoryClient({
 
           {/* Date Pickers */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
                 Dari Tanggal
               </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
+              <div className="w-full min-w-0 overflow-hidden px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  className="w-full max-w-full min-w-0 p-0 border-0 bg-transparent text-xs text-gray-900 dark:text-white focus:outline-none block appearance-none"
+                />
+              </div>
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">
                 Sampai Tanggal
               </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
+              <div className="w-full min-w-0 overflow-hidden px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEndDate(e.target.value)}
+                  className="w-full max-w-full min-w-0 p-0 border-0 bg-transparent text-xs text-gray-900 dark:text-white focus:outline-none block appearance-none"
+                />
+              </div>
             </div>
           </div>
 
@@ -763,18 +767,20 @@ export default function HistoryClient({
             <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 pt-3">
               <div className="space-y-3 overflow-y-auto overscroll-contain flex-1 pr-1 -mr-1 pb-2">
                 {/* Date */}
-                <div>
+                <div className="min-w-0">
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                     <Calendar className="w-3.5 h-3.5 text-gray-400" />
                     Tanggal
                   </label>
-                  <input 
-                    type="date"
-                    required
-                    value={editForm.date}
-                    onChange={e => setEditForm({...editForm, date: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="w-full min-w-0 overflow-hidden px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl focus-within:ring-2 focus-within:ring-blue-500">
+                    <input 
+                      type="date"
+                      required
+                      value={editForm.date}
+                      onChange={e => setEditForm({...editForm, date: e.target.value})}
+                      className="w-full max-w-full min-w-0 p-0 border-0 bg-transparent text-gray-900 dark:text-white text-sm focus:outline-none block appearance-none"
+                    />
+                  </div>
                 </div>
 
                 {/* Wallet / Account */}

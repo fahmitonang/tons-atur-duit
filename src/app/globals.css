@@ -78,3 +78,19 @@ p, blockquote, li {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Fix iOS Safari / WebKit <input type="date"> horizontal overflow */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.25rem;
+}
